@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="megawin_p3" />
+		<Option makefile_is_custom="1" />
+		<Option pch_mode="2" />
+		<Option compiler="arm-elf-gcc" />
+		<Build>
+			<Target title="default">
+				<Option output="default/image.elf" prefix_auto="0" extension_auto="0" />
+				<Option object_output="default" />
+				<Option type="1" />
+				<Option compiler="arm-elf-gcc" />
+				<ExtraCommands>
+					<Add after="$(TP)objcopy -O binary $(TARGET_OUTPUT_FILE) $(TARGET_OUTPUT_BASENAME).bin" />
+					<Add after="$(TP)objdump -Mforce-thumb -d -S -G $(TARGET_OUTPUT_FILE) &gt; $(TARGET_OUTPUT_BASENAME).lst" />
+					<Add after="$(TP)size $(TARGET_OUTPUT_FILE)" />
+				</ExtraCommands>
+			</Target>
+			<Target title="svr">
+				<Option output="megawin" prefix_auto="1" extension_auto="1" />
+				<Option type="0" />
+				<Option compiler="arm-elf-gcc" />
+				<MakeCommands>
+					<Build command="./build_svr" />
+					<CompileFile command="make -f svr.make $file" />
+					<Clean command="make -f svr.make clean" />
+					<DistClean command="$make -f $makefile distclean$target" />
+					<AskRebuildNeeded command="make -q -f svr.make" />
+					<SilentBuild command="./build_svr &gt; $(CMD_NULL)" />
+				</MakeCommands>
+			</Target>
+			<Target title="app">
+				<Option output="megawin" prefix_auto="1" extension_auto="1" />
+				<Option type="1" />
+				<Option compiler="arm-elf-gcc" />
+				<Option use_console_runner="0" />
+				<MakeCommands>
+					<Build command="./build_app" />
+					<CompileFile command="make -f app.make $file" />
+					<Clean command="make -f app.make clean" />
+					<DistClean command="$make -f $makefile distclean$target" />
+					<AskRebuildNeeded command="make -q -f app.make" />
+					<SilentBuild command="./build_app &gt; $(CMD_NULL)" />
+				</MakeCommands>
+			</Target>
+			<Target title="premake">
+				<Option output="megawin" prefix_auto="1" extension_auto="1" />
+				<Option type="0" />
+				<Option compiler="arm-elf-gcc" />
+				<MakeCommands>
+					<Build command="premake5 gmake" />
+					<CompileFile command="" />
+					<Clean command="" />
+					<DistClean command="$make -f $makefile distclean$target" />
+					<AskRebuildNeeded command="" />
+					<SilentBuild command="premake5 gmake &gt; $(CMD_NULL)" />
+				</MakeCommands>
+			</Target>
+			<Environment>
+				<Variable name="TP" value="$(TARGET_COMPILER_DIR)bin/arm-none-eabi-" />
+			</Environment>
+		</Build>
+		<Compiler>
+			<Add option="-mthumb" />
+			<Add option="-Os" />
+			<Add option="-Wall" />
+			<Add option="-g" />
+			<Add option="-fno-common" />
+			<Add option="-mcpu=cortex-m0" />
+			<Add option="-ffunction-sections" />
+			<Add option="-fdata-sections" />
+			<Add option="-nostdlib" />
+			<Add option="-DMG32F02A032" />
+			<Add directory="/opt/arm/megawin/DFP/MG32x02z" />
+			<Add directory="/opt/arm/megawin/DFP/MG32x02z/MG32F02A032/Include" />
+			<Add directory="/opt/arm/megawin/DFP/MG32x02z/MG32F02A_Driver/Include" />
+			<Add directory="/opt/arm/CMSIS" />
+			<Add directory="/opt/arm/CMSIS/CMSIS/Core/Include" />
+			<Add directory="src" />
+			<Add directory="/opt/arm/megawin/DFP/MG32x02z/Common/Initial/Include" />
+			<Add directory="/opt/arm/megawin/DFP/MG32x02z/Package/MG32F02A032" />
+		</Compiler>
+		<Linker>
+			<Add option="-Wl,-Map,map.txt" />
+			<Add option="-mcpu=cortex-m0" />
+			<Add option="-T ld/mg32f02a032.ld" />
+			<Add option="-ffunction-sections" />
+			<Add option="-fdata-sections" />
+			<Add option="--specs=nosys.specs" />
+			<Add option="-nostdlib" />
+		</Linker>
+		<Unit filename="ld/mg32f02a032_app.ld">
+			<Option target="app" />
+		</Unit>
+		<Unit filename="ld/mg32f02a032_svr.ld">
+			<Option target="svr" />
+		</Unit>
+		<Unit filename="ld/mg32f02a064_app.ld" />
+		<Unit filename="ld/mg32f02a064_svr.ld" />
+		<Unit filename="premake5.lua">
+			<Option target="default" />
+		</Unit>
+		<Unit filename="src/adc.c">
+			<Option compilerVar="CPP" />
+		</Unit>
+		<Unit filename="src/adc.h" />
+		<Unit filename="src/api.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/api.h" />
+		<Unit filename="src/app.c">
+			<Option compilerVar="CC" />
+			<Option target="app" />
+		</Unit>
+		<Unit filename="src/init.c">
+			<Option compilerVar="CC" />
+			<Option target="default" />
+		</Unit>
+		<Unit filename="src/init.h">
+			<Option target="default" />
+		</Unit>
+		<Unit filename="src/main.c">
+			<Option compilerVar="CC" />
+			<Option target="default" />
+		</Unit>
+		<Unit filename="src/startup.c">
+			<Option compilerVar="CC" />
+			<Option target="default" />
+		</Unit>
+		<Unit filename="src/svr.c">
+			<Option compilerVar="CC" />
+			<Option target="svr" />
+			<Option target="premake" />
+		</Unit>
+		<Unit filename="src/svr.h">
+			<Option target="svr" />
+			<Option target="premake" />
+		</Unit>
+		<Unit filename="src/uart.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/uart.h" />
+		<Unit filename="src/ulib.c">
+			<Option compilerVar="CPP" />
+		</Unit>
+		<Unit filename="src/ulib.h" />
+		<Extensions>
+			<lib_finder disable_auto="1" />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

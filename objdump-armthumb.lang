@@ -1,0 +1,36 @@
+# GNU Source-highlight 3.1.8
+# language definition file objdump's disassembler ARM Thumb listing
+# by reug@mail.ru
+
+comment start ";|/*"
+
+include "c_string.lang"
+
+# preproc = '^[[:blank:]]*\.([[:alnum:]]+)'
+# preproc = '^[[:blank:]]*([[:alnum:]]+):'
+
+keyword = "adc|add|adds|and|ands|asr|asrs",
+"b|beq|bne|bcs|bcc|bmi|bpl|bvs|bvc|bhi|bls|bge|blt|bgt|ble|bic|bl|blx|bx",
+"cmn|cmp|eor",
+"ldmia|ldr|ldrsh|ldrsb|ldrb|ldrh|lsl|lsls|ldsb|ldsh|lsr|lsrs",
+"mov|movs|mul|mvn|neg|negs|nop",
+"orr|orrs|push|pop|ror|rors",
+"sbc|sbcs|stmia|str|strb|strh|swi|sub|subs|svc|sxtb",
+"tst",
+"uxtb|uxth"
+nonsensitive
+
+variable = "r0|r1|r2|r3|r4|r5|r6|r7|r8|r9|r10|r11|r12|r13|r14|r15",
+"ip|pc|lr"
+nonsensitive
+
+type = ".byte|.dword|high|low|qword|tbyte|.word"
+
+#number = '0([0-9a-fA-F]+)([hHlLuU]*)'
+
+#number = '((?:0x|0X)[0-9a-fA-F]+|\d*[\.\_]?\d+(?:[eE][\-\+]\d+)?[hHlLuU]*)'
+number = '((^|(\s+))[0-9a-fA-F]{2,8})'
+
+include "symbols.lang"
+include "number.lang"
+

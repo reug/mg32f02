@@ -1,0 +1,2 @@
+echo "Starting OpenOCD Telnet session..."
+telnet 127.0.0.1 4444

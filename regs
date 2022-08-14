@@ -1,0 +1,3 @@
+#!/bin/bash
+TELNET="telnet 127.0.0.1 4444"
+(echo "halt"; sleep 0.1; echo "reg"; sleep 0.1; echo "resume"; sleep 0.1;) | $TELNET

@@ -9,7 +9,8 @@ typedef void(*handler_t)();
 /// IRQ Handlers
 volatile handler_t hdlr[32];
 
-
+/*
+// MG32F02A032
 __attribute__ ((naked))
 void HardFault_Handler() {
   // Включаем мигание светодиодом на PB3
@@ -21,6 +22,21 @@ void HardFault_Handler() {
     delay_ms(100);
   }
 }
+*/
+
+// MG32F02A064 LQFP48
+__attribute__ ((naked))
+void HardFault_Handler() {
+  // Включаем мигание светодиодом на PB14
+  *(volatile uint16_t*)PB_CR14_h0 = 0x0002; // PB14 -> push-pull output
+  while (1) {
+    *(volatile uint16_t*)PB_SC_h0 = (1 << 14); // set bit 14
+    delay_ms(100);
+    *(volatile uint16_t*)PB_SC_h1 = (1 << 14); // clear bit 14
+    delay_ms(100);
+  }
+}
+
 
 
 __attribute__ ((naked))

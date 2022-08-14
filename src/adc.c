@@ -17,7 +17,25 @@ void adc_start_one(uint8_t chn) {
 }
 
 
+void adc_start_one_int(uint8_t chn) {
+  *(volatile uint16_t*)ADC0_START_h0 = (1 << 12) | (chn << 8) | 1; // ADC0_CH_SEL=1, ADC0_CH_MUX = chn & ADC0_START = 1
+}
+
+
 int16_t adc_samp() {
   while ( ! (*(volatile uint8_t*)ADC0_STA_b0 & 0x08)); // waiting ADC0_E1CNVF==1
   return *(volatile uint16_t*)ADC0_DAT0_h0; // ADC0_DAT0
 }
+
+
+void adc_ivr24() {
+  *(volatile uint8_t*)ADC0_ANA_b0 = (1 << 4) | 2; // ADC0_IVREF_SEL = 1,  ADC0_IVR_EN = 1
+}
+
+
+void adc_vbuf() {
+  *(volatile uint16_t*)PW_KEY_h0 = 0xA217; // unlock access to PW regs
+  *(volatile uint8_t*)PW_CR0_b0 = 2; // PW_IVR_EN = 1
+  *(volatile uint16_t*)PW_KEY_h0 = 0; // lock access to PW regs
+}
+

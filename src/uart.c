@@ -5,17 +5,7 @@
 void uart_init(uint8_t port_no) {
   register uint32_t da=(uint32_t)port_no*0x10000;
 
-  // Pins:
-  switch (port_no) {
-    case 0:
-      *(volatile uint16_t*)PC_CR0_h0 = (0xA << 12) | 2; // PC0 -> URT0_TX, push pull output
-      *(volatile uint16_t*)PC_CR1_h0 = (0xA << 12) | (1 << 5) | 3; // PC1 -> URT0_RX, pull-up resister enable, digital input
-      break;
-    case 1:
-      *(volatile uint16_t*)PB_CR10_h0 = (0x7 << 12) | 2; // PB10 -> URT1_TX, push pull output
-      *(volatile uint16_t*)PB_CR11_h0 = (0x7 << 12) | (1 << 5) | 3; // PB11 -> URT1_RX, pull-up resister enable, digital input
-      break;
-  }
+
 
   // Clock source:
   *((volatile uint16_t*)CSC_KEY_h0) = 0xA217; // unlock access to CSC regs

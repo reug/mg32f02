@@ -1,0 +1,5 @@
+# Disassembly viewer for
+# objdump's disassembly ARM Thumb listing
+# by reug@mail.ru, 2022
+
+sed -E -e '/^(\s+[0-9a-fA-F]+:)|([0-9a-fA-F]{8})/!s/^/;/' < $1 | source-highlight -s asm -f esc --lang-def=objdump-armthumb.lang --style-file disview.style | less

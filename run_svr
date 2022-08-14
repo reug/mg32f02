@@ -1,0 +1,4 @@
+#!/bin/bash
+TELNET="telnet 127.0.0.1 4444"
+DIR=`pwd`
+(echo "mem_ap_flash $DIR/bin/svr.bin 0x18000000"; sleep 3;) | $TELNET
