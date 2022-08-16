@@ -150,6 +150,11 @@
 		</Unit>
 		<Unit filename="src/ulib.h" />
 		<Extensions>
+			<debugger>
+				<remote_debugging>
+					<options conn_type="0" ip_address="127.0.0.1" ip_port="3333" />
+				</remote_debugging>
+			</debugger>
 			<lib_finder disable_auto="1" />
 		</Extensions>
 	</Project>

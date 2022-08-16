@@ -18,12 +18,6 @@ void adc_start_one(uint8_t chn) {
 }
 
 
-void adc_start_one_int(uint8_t chn) {
-  // ADC0_CH_SEL=1, ADC0_CH_MUX = chn & ADC0_START = 1
-  *(volatile uint16_t*)ADC0_START_h0 = (1 << 12) | (chn << 8) | 1;
-}
-
-
 uint16_t adc_samp() {
   // waiting ADC0_E1CNVF==1
   while ( ! (*(volatile uint8_t*)ADC0_STA_b0 & 0x08));
@@ -56,9 +50,9 @@ void adc_settime(uint8_t t) {
 // Режим с ADC0_TRG_CONT=1 и ручным запуском через ADC0_START = 1 с суммированием не работает.
 // Поэтому каждое измерение запускаем вручную.
 uint16_t adc_measure_sum(uint8_t chn) {
-  // Настройка режиме суммирования в аккумуляторе SUM0:
+  // Настройка режима суммирования в аккумуляторе SUM0:
   *(volatile uint8_t*)ADC0_CR1_b2 = 16; // sum of 8 (max 64) , ADC0_SUM_MDS =0 (single) - DEFAULT
-  *(volatile uint8_t*)ADC0_MSK_b2 = chn; // ADC0_SUM0_MUX = chn
+  *(volatile uint8_t*)ADC0_MSK_b2 = chn & 0x0F; // ADC0_SUM0_MUX = chn
   *(volatile uint16_t*)ADC0_SUM0_h0 = 0;  // clear sum
 
   // Полусофтовый режим:
@@ -86,9 +80,9 @@ uint16_t adc_measure_sum(uint8_t chn) {
 // Может быть просто неправильно срабатывает флаг???
 // Если подождать дольше, сумма начнет увеличиваться.
 uint16_t adc_measure_sum_cont(uint8_t chn) {
-  // Настройка режиме суммирования в аккумуляторе SUM0:
+  // Настройка режима суммирования в аккумуляторе SUM0:
   *(volatile uint8_t*)ADC0_CR1_b2 = 16; // sum of 8 (max 64) , ADC0_SUM_MDS =0 (single) - DEFAULT
-  *(volatile uint8_t*)ADC0_MSK_b2 = chn; // ADC0_SUM0_MUX = chn
+  *(volatile uint8_t*)ADC0_MSK_b2 = chn & 0x0F; // ADC0_SUM0_MUX = chn
   *(volatile uint16_t*)ADC0_SUM0_h0 = 0;  // clear sum
 
 
@@ -105,4 +99,12 @@ uint16_t adc_measure_sum_cont(uint8_t chn) {
   // Обработка результата: деление на 16
   //return *(volatile uint16_t*)ADC0_SUM0_h0 >> 4; // ADC0_DAT0 div 16
   return *(volatile uint16_t*)ADC0_SUM0_h0; // ADC0_DAT0  БЕЗ ДЕЛЕНИЯ ТОЛЬКО ДЛЯ ТЕСТА
+}
+
+// TODO
+uint16_t adc_temperature_cal(uint16_t d) {
+  uint32_t tc = *(volatile uint32_t*)ADC0_TCAL_w;
+  uint32_t t0 = tc & 0x0FFF;  // ADC0_TCAL0
+  uint32_t t1 = (tc >> 16) & 0x0FFF; // ADC0_TCAL1
+
 }

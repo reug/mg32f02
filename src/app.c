@@ -83,6 +83,11 @@ void app() {
   adc_init();
   //adc_ivr24();
 
+  // Включение термометра
+  *(volatile uint8_t*)ADC0_ANA_b1 |= 0x80; // ADC0_TS_AUTO = 1
+  *(volatile uint8_t*)ADC0_ANA_b0 |= 0x08; // ADC0_TS_EN = 1
+  delay_ms(1);
+
 
   while (1) {
 
@@ -93,7 +98,7 @@ void app() {
     //adc_start_one_int(3);
     //adc_start_one(8);
     //d = adc_samp();
-    d = adc_measure_sum(8);
+    d = adc_measure_sum(9 | 0x10);
     //d = adc_measure_sum_cont(8);
 
     strUint16hex(s,d); s[4]=' '; strUint16(s+5,5,d);
