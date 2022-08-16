@@ -1,4 +1,4 @@
 #!/bin/bash
 TELNET="telnet 127.0.0.1 4444"
 DIR=`pwd`
-(echo "halt"; sleep 0.2; echo "load_image $DIR/bin/app.bin 0x20000000 bin"; sleep 0.2; echo "reset"; sleep 0.2;) | $TELNET
+(echo "halt"; sleep 0.5; echo "load_image $DIR/bin/app.bin 0x20000000 bin"; sleep 0.2; echo "reset"; sleep 0.5;) | $TELNET

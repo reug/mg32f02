@@ -124,13 +124,12 @@ char* strUint16(char* str, uint8_t width, uint16_t num) {
 
 
 char* strUint16hex(char* str, uint16_t num) {
-  uint16_t d=num;
   uint8_t c;
   int8_t k;
   for (k=3; k>=0; k--) {
-    c=0x0F & d;
+    c=0x000F & num;
     str[k]=c + (c<10 ? 48 : 55);
-    d = d >> 4;
+    num >>= 4;
   }
   str[4]=0;
   return str+4;

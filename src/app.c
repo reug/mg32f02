@@ -23,6 +23,15 @@ void uart_hdl() {
 }
 
 
+void debug(char label, uint16_t d) {
+  char s[32];
+  s[0]=label; s[1]=' ';
+  strUint16hex(s+2,d); s[6]=' ';
+  strUint16(s+7,5,d);
+  uart_puts(PORT, s, UART_NEWLINE_CRLF);
+}
+
+
 // First function in application
 __attribute__ ((section(".app"))) // put function in the begin of .text after signature word "app_sign"
 __attribute__ ((noreturn))
@@ -41,10 +50,10 @@ void app() {
 }
 */
 
-// Вариант с прерыванием и портом 0
+
 void app() {
-  uint16_t i;
-  char s[8];
+  uint32_t d;
+  char s[16];
 
   setup_icko();
   //setup_ihrco();
@@ -70,57 +79,27 @@ void app() {
 
   uart_puts(PORT,"Hello",UART_NEWLINE_CRLF);
 
-  adc_vbuf();
+  //adc_vbuf();
   adc_init();
   //adc_ivr24();
 
-  //i=0;
+
   while (1) {
-    //adc_start_one(8);
-    adc_start_one_int(3);
+
     *(volatile uint16_t*)PB_SC_h0 = (1 << 13); // set bit 2
-    delay_ms(100);
+    delay_ms(10);
+    *(volatile uint16_t*)PB_SC_h1 = (1 << 13); // clear bit 2
 
-//    strUint16(s,2,i);
-//    uart_puts(PORT, s, UART_NEWLINE_CRLF);
+    //adc_start_one_int(3);
+    //adc_start_one(8);
+    //d = adc_samp();
+    d = adc_measure_sum(8);
+    //d = adc_measure_sum_cont(8);
 
-    strUint16(s,5,adc_samp());
+    strUint16hex(s,d); s[4]=' '; strUint16(s+5,5,d);
     uart_puts(PORT, s, UART_NEWLINE_CRLF);
 
-    *(volatile uint16_t*)PB_SC_h1 = (1 << 13); // clear bit 2
-    delay_ms(100);
-
-    //if (++i>12) i=0;
+    delay_ms(500);
   }
 
 }
-
-/*
-// Вариант с прерыванием и портом 1
-void app() {
-  setup_icko();
-  //setup_ihrco();
-  setup_xosc();
-  //setup_pll();
-
-  //*((volatile uint16_t*)(PB1_CR_ADR))=0x0002;
-  *(volatile uint16_t*)PB_CR2_h0 = 0x0002; // PB2 -> push-pull output
-
-  uart_init(PORT);
-  SVC2(SVC_HANDLER_SET,21,uart_hdl);
-
-  // включаем прерывания в модуле URT1
-  *(volatile uint8_t*)URT1_INT_b0 = 0x40 | 0x01; // URT1_RX_IE | URT1_IEA
-  // включаем прерывание в модуле NVIC
-  *(volatile uint32_t*)CPU_ISER_w = (1 << 21); // SETENA 21
-  uart_puts(PORT,"Hello",UART_NEWLINE_CRLF);
-
-  while (1) {
-    *(volatile uint16_t*)PB_SC_h0 = 0x0004; // set bit 2
-    delay_ms(250);
-    *(volatile uint16_t*)PB_SC_h1 = 0x0004; // clear bit 2
-    delay_ms(250);
-  }
-
-}
-*/
