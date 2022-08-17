@@ -7,7 +7,7 @@ void adc_init() {
   *(volatile uint8_t*)CSC_APB0_b0 |= 1; // CSC_ADC0_EN = 1
   *((volatile uint16_t*)CSC_KEY_h0) = 0x1111; // lock access to CSC regs
   *(volatile uint8_t*)ADC0_CR0_b0 = 1;// ADC0_RES_SEL = 0 (12bit), ADC0_EN = 1
-  //*(volatile uint8_t*)ADC0_CLK_b0 = (1 << 4); // ADC0_CK_DIV = 1 (DIV2);
+  *(volatile uint8_t*)ADC0_CLK_b0 = (2 << 4); // ADC0_CK_DIV = 2 (DIV4);
   //*(volatile uint8_t*)ADC0_CLK_b0 = (1 << 4); // ADC0_CK_DIV = 1 (DIV2);
 }
 
@@ -100,6 +100,14 @@ uint16_t adc_measure_sum_cont(uint8_t chn) {
   //return *(volatile uint16_t*)ADC0_SUM0_h0 >> 4; // ADC0_DAT0 div 16
   return *(volatile uint16_t*)ADC0_SUM0_h0; // ADC0_DAT0  БЕЗ ДЕЛЕНИЯ ТОЛЬКО ДЛЯ ТЕСТА
 }
+
+
+void adc_start_mask(uint16_t mask) {
+  *(volatile uint16_t*)ADC0_MSK_h0 = mask; // ADC0_SUM0_MUX = chn
+  // ADC0_CONV_MDS = 1 (Scan), ADC0_TRG_CONT = 1, ADC0_START = 1
+  *(volatile uint32_t*)ADC0_START_w = (1 << 24) | (1 << 19) | 1;
+}
+
 
 // TODO
 uint16_t adc_temperature_cal(uint16_t d) {

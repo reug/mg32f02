@@ -30,6 +30,8 @@ uint16_t adc_measure_sum(uint8_t chn);
 
 uint16_t adc_measure_sum_cont(uint8_t chn);
 
+void adc_start_mask(uint16_t mask);
+
 uint16_t adc_temperature_cal(uint16_t d);
 
 #endif

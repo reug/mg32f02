@@ -69,6 +69,11 @@ void SVC_Handler_main(uint32_t* sp) {
   }
 }
 
+__attribute__ ((interrupt))
+void ADC_IRQHandler() {
+  if (hdlr[10]) hdlr[10]();
+}
+
 
 __attribute__ ((interrupt))
 void URT0_IRQHandler() {

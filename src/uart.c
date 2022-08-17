@@ -5,8 +5,6 @@
 void uart_init(uint8_t port_no) {
   register uint32_t da=(uint32_t)port_no*0x10000;
 
-
-
   // Clock source:
   *((volatile uint16_t*)CSC_KEY_h0) = 0xA217; // unlock access to CSC regs
   // (0x4C010022)
