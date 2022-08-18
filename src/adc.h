@@ -20,6 +20,9 @@ void adc_ivr24();
 /// Включение ИОН на 1.4 В
 void adc_vbuf();
 
+/// Включение термометра. При ts_auto=1 будет включен бит ADC0_TS_AUTO.
+void adc_tso(uint8_t ts_auto);
+
 /// Установка времени измерения 24 (0) или 30 (1)
 void adc_settime(uint8_t t);
 

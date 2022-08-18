@@ -7,7 +7,7 @@ void adc_init() {
   *(volatile uint8_t*)CSC_APB0_b0 |= 1; // CSC_ADC0_EN = 1
   *((volatile uint16_t*)CSC_KEY_h0) = 0x1111; // lock access to CSC regs
   *(volatile uint8_t*)ADC0_CR0_b0 = 1;// ADC0_RES_SEL = 0 (12bit), ADC0_EN = 1
-  *(volatile uint8_t*)ADC0_CLK_b0 = (2 << 4); // ADC0_CK_DIV = 2 (DIV4);
+  //*(volatile uint8_t*)ADC0_CLK_b0 = (2 << 4); // ADC0_CK_DIV = 2 (DIV4);
   //*(volatile uint8_t*)ADC0_CLK_b0 = (1 << 4); // ADC0_CK_DIV = 1 (DIV2);
 }
 
@@ -38,6 +38,12 @@ void adc_vbuf() {
 }
 
 
+void adc_tso(uint8_t ts_auto) {
+  // ADC0_TS_AUTO = ts_auto, ADC0_TS_EN = 1
+  *(volatile uint16_t*)ADC0_ANA_h0 |= (ts_auto << 15) | (1 << 3);
+}
+
+
 void adc_settime(uint8_t t) {
   if (t)
     *(volatile uint16_t*)ADC0_ANA_h0 |= (1 << 14); // ADC0_CONV_TIME = 1 (30)
@@ -65,8 +71,8 @@ uint16_t adc_measure_sum(uint8_t chn) {
   // Ожидаем заданное число измерений по активации флага ADC0_SUMCF
   while ( ! ( *(volatile uint16_t*)ADC0_STA_h0 & (1 << 14) ) ); // ADC0_SUMCF == 1 ?
 
-  *(volatile uint16_t*)ADC0_STA_h0 = 0xFFFF;  // clear all flags ЛИБО ВСЕ
-  //*(volatile uint8_t*)ADC0_STA_b1 = 0xE0;  // clear all flags ЛИБО ВСЕ
+  //*(volatile uint16_t*)ADC0_STA_h0 = 0xFFFF;  // clear all flags ЛИБО ВСЕ
+  *(volatile uint8_t*)ADC0_STA_b1 = 0xE0;  // clear all flags
 
   // Обработка результата: деление на 16
   return *(volatile uint16_t*)ADC0_SUM0_h0 >> 4; // ADC0_DAT0 div 16
@@ -103,7 +109,7 @@ uint16_t adc_measure_sum_cont(uint8_t chn) {
 
 
 void adc_start_mask(uint16_t mask) {
-  *(volatile uint16_t*)ADC0_MSK_h0 = mask; // ADC0_SUM0_MUX = chn
+  *(volatile uint16_t*)ADC0_MSK_h0 = mask;
   // ADC0_CONV_MDS = 1 (Scan), ADC0_TRG_CONT = 1, ADC0_START = 1
   *(volatile uint32_t*)ADC0_START_w = (1 << 24) | (1 << 19) | 1;
 }
