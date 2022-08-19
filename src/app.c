@@ -6,6 +6,7 @@
 #include "api.h"
 #include "uart.h"
 #include "adc.h"
+#include "cmp.h"
 #include "init.h"
 
 #define PORT 0
@@ -85,7 +86,7 @@ void adc_test_scan() {
   // включаем прерывание в модуле NVIC:
   *(volatile uint32_t*)CPU_ISER_w = (1 << 10); // SETENA 10
   // Увеличиваем время сэмплирования:
-  //*(volatile uint8_t*)ADC0_CR0_b2 = 50; // ADC0_SMP_SEL
+  //*(volatile uint8_t*)ADC0_CR0_b2 = 20; // ADC0_SMP_SEL
   while (1) {
     af=0; for (i=0; i<16; i++) ad[i]=0; // init
     led1_flash();
@@ -129,6 +130,58 @@ void adc_test_ivr24() {
 }
 
 
+void cmp_test() {
+  cmp_init(0);
+  // Входы: PA8 -> CMP0_I0 (pos), PA9 -> CMP0_I1 (neg)
+  // Выход (PC9):
+  *(volatile uint16_t*)PC_CR9_h0 = (1 << 12) | 2; // AFS: CMP0_P0, PC9 -> push-pull output
+  *(volatile uint32_t*)CMP_CR0_w =
+    (0 << 18)  | //CMP_AC0_FSEL: bypass
+    (0 << 12)  | // CMP_AC0_NMUX: IVREF     //(2 << 12)  | // CMP_AC0_NMUX: CMP0_I1
+    (1 << 8)   | // CMP_AC0_PMUX: CMP0_I0
+    (1 << 4)   | // CMP_AC0_HYS = 1, 10 mV
+    1; // CMP_AC0_EN = 1
+  *(volatile uint8_t*)CMP_ANA_b0 =
+    (63 << 2) | // CMP_IVREF_RS = 63
+     3; // CMP_IVREF_SEL =1: VR0 (1.650 V), CMP_IVREF_EN = 1
+
+}
+
+
+void cmp_test_ivref() {
+  cmp_init(0);
+  // Входы: PA8 -> CMP0_I0 (pos), PA9 -> CMP0_I1 (neg)
+  *(volatile uint32_t*)CMP_CR0_w =
+    (1 << 31)  | // CMP_AC0_IVROE = 1
+    (2 << 12)  | // CMP_AC0_NMUX: CMP0_I1
+    (1 << 8)   | // CMP_AC0_PMUX: CMP0_I0
+    1; // CMP_AC0_EN = 1
+  *(volatile uint8_t*)CMP_ANA_b0 =
+    (31 << 2) | // CMP_IVREF_RS = 63
+    1;// 3; // CMP_IVREF_SEL = 0: VDD (3.3 V), CMP_IVREF_EN = 1
+}
+
+
+void cmp_test_ivref_gen() {
+  uint8_t i;
+  cmp_init(0);
+  // Входы: PA8 -> CMP0_I0 (pos), PA9 -> CMP0_I1 (neg)
+  *(volatile uint32_t*)CMP_CR0_w =
+    (1 << 31)  | // CMP_AC0_IVROE = 1
+    (2 << 12)  | // CMP_AC0_NMUX: CMP0_I1
+    (1 << 8)   | // CMP_AC0_PMUX: CMP0_I0
+    1; // CMP_AC0_EN = 1
+
+  while (1) {
+    for (i=0; i<=63; i++) {
+      *(volatile uint8_t*)CMP_ANA_b0 = (i << 2) | 1; // CMP_IVREF_EN = 1
+      // Подбор временного масштаба для осциллографа:
+      __NOP(); __NOP(); __NOP(); __NOP(); __NOP(); __NOP(); __NOP(); __NOP();
+    }
+  }
+}
+
+
 // First function in application
 __attribute__ ((section(".app"))) // put function in the begin of .text after signature word "app_sign"
 __attribute__ ((noreturn))
@@ -162,8 +215,13 @@ void app() {
   uart_puts(PORT,"Hello",UART_NEWLINE_CRLF);
 
   //adc_test_one();
-  adc_test_scan();
+  //adc_test_scan();
   //adc_test_sum();
   //adc_test_ivr24();
 
+  //cmp_test();
+  //cmp_test_ivref();
+  //while (1);
+
+  cmp_test_ivref_gen();
 }

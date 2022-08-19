@@ -75,7 +75,7 @@ project "svr"
 project "app"
   kind "ConsoleApp"
   language "C"
-  files {"src/app.c", "src/uart.c", "src/adc.c", "src/init.c", "src/ulib.c"}
+  files {"src/app.c", "src/uart.c", "src/adc.c", "src/cmp.c", "src/init.c", "src/ulib.c"}
   linkoptions {"-nostdlib"}
   linkoptions { "-Wl,--gc-sections"}
   linkoptions {"-T mg32f02a064_app.ld"}
