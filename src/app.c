@@ -162,8 +162,8 @@ void app() {
   uart_puts(PORT,"Hello",UART_NEWLINE_CRLF);
 
   //adc_test_one();
-  //adc_test_scan();
+  adc_test_scan();
   //adc_test_sum();
-  adc_test_ivr24();
+  //adc_test_ivr24();
 
 }

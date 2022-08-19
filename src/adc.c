@@ -7,7 +7,7 @@ void adc_init() {
   *(volatile uint8_t*)CSC_APB0_b0 |= 1; // CSC_ADC0_EN = 1
   *((volatile uint16_t*)CSC_KEY_h0) = 0x1111; // lock access to CSC regs
   *(volatile uint8_t*)ADC0_CR0_b0 = 1;// ADC0_RES_SEL = 0 (12bit), ADC0_EN = 1
-  //*(volatile uint8_t*)ADC0_CLK_b0 = (2 << 4); // ADC0_CK_DIV = 2 (DIV4);
+  *(volatile uint8_t*)ADC0_CLK_b0 = (2 << 4); // ADC0_CK_DIV = 2 (DIV4);
   //*(volatile uint8_t*)ADC0_CLK_b0 = (1 << 4); // ADC0_CK_DIV = 1 (DIV2);
 }
 
