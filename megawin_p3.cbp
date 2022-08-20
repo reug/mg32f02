@@ -117,6 +117,10 @@
 			<Option compilerVar="CC" />
 			<Option target="app" />
 		</Unit>
+		<Unit filename="src/cmp.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/cmp.h" />
 		<Unit filename="src/init.c">
 			<Option compilerVar="CC" />
 			<Option target="default" />

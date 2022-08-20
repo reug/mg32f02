@@ -116,6 +116,27 @@ void adc_test_sum() {
   }
 }
 
+/// Режим измерения с суммированием одного канала в фоне
+void adc_test_sum_cont() {
+  uint16_t d;
+  char s[8];
+  adc_init();
+  while (1) {
+    d = adc_measure_sum_cont(8); // Result sum
+    // Контроль пределов суммы:
+    if (d<16000) {
+      *(volatile uint16_t*)PB_SC_h0 = (1 << 13); // set bit 14
+    }
+    if (d>17000) {
+      *(volatile uint16_t*)PB_SC_h0 = (1 << 14); // set bit 14
+    }
+    strUint16(s,5,d);
+    uart_puts(PORT,s,UART_NEWLINE_CRLF);
+    delay_ms(100);
+  }
+}
+
+
 /// Тестирование ИОН на 2.40 В
 void adc_test_ivr24() {
   char s[8];
@@ -217,11 +238,12 @@ void app() {
   //adc_test_one();
   //adc_test_scan();
   //adc_test_sum();
+  adc_test_sum_cont();
   //adc_test_ivr24();
 
   //cmp_test();
   //cmp_test_ivref();
   //while (1);
 
-  cmp_test_ivref_gen();
+  //cmp_test_ivref_gen();
 }
