@@ -1,5 +1,8 @@
 #include "adc.h"
 #include "MG32x02z__RegAddress.h"
+#include "MG32x02z_ADC.h"
+
+#define BA ADC0_Base                  // Base address for ADC0
 
 
 void adc_init() {
@@ -76,7 +79,8 @@ uint16_t adc_measure_sum(uint8_t chn) {
 }
 
 
-uint16_t adc_measure_sum_cont(uint8_t chn) {
+void adc_start_sum0(uint8_t chn) {
+  //uint32_t r;
   // Настройка режима суммирования в аккумуляторе SUM0:
   // ВНИМАНИЕ: Обязательно устанавливать ADC0_SOVR_MDS, иначе результат суммирования будет непредсказуем!
   // Sum of 16 (max 64), ADC0_SUM_MDS =0 (single) - DEFAULT, ADC0_SOVR_MDS=1
@@ -88,17 +92,30 @@ uint16_t adc_measure_sum_cont(uint8_t chn) {
   //ADC0_TRG_CONT=1, ADC0_CH_MUX = chn, ADC0_START = 1
   *(volatile uint32_t*)ADC0_START_w = (1 << 19) | (chn << 8) | 1;
 
-  // Ожидаем заданное число измерений по активации флага ADC0_SUMCF
-  while (! ( *(volatile uint16_t*)ADC0_STA_h0 & (1 << 14) ) ); // ADC0_SUMCF == 1 ?
+}
 
+
+uint16_t adc_read_sum0() {
   // Эти действия обязательны! Их последовательность не столь критична.
+/*
   *(volatile uint8_t*)ADC0_CR1_b2 = 0; // ADC0_SUM_NUM=0
   *(volatile uint32_t*)ADC0_START_w = 0; // ADC0_TRG_CONT=0, ADC0_START=0
   *(volatile uint16_t*)ADC0_STA_h0 = 0xFFFF;  // clear all flags
-
-  // Обработка результата: деление на 16
-  //return *(volatile uint16_t*)ADC0_SUM0_h0 >> 4; // ADC0_DAT0 div 16
-  return *(volatile uint16_t*)ADC0_SUM0_h0; // ADC0_DAT0  БЕЗ ДЕЛЕНИЯ ТОЛЬКО ДЛЯ ТЕСТА
+  //return *(volatile uint16_t*)ADC0_SUM0_h0 >> 4; // ADC0_DAT0 >> 4
+*/
+  // Переделано на асм, поскольку gcc (-O3) делает код в 2 раза больше, а функция часто будет вызываться, в том числе из прерывания
+  asm(
+    "mov  r0,#0\n"
+    "mov  r1,%[base]\n"                 // r1 <- ADC0_Base address
+    "strb r0,[r1, %[CR1_b2]]\n"         // CR1_b2 <- 0 (ADC0_SUM_NUM=0)
+    "str  r0,[r1, %[START_w]]\n"        // START_w <- 0 (ADC0_TRG_CONT=0, ADC0_START=0)
+    "sub  r0,#1\n"                      // r0 <- 0xFFFF
+    "strh r0,[r1, %[STA_h0]]\n"         // STA_h0 <- 0xFFFF (clear all flags)
+    "ldrh r0,[r1, %[SUM0_h0]]\n"        // SUM0_DAT
+    //"lsr  r0,#4\n"                      // SUM /16
+    :: [base]"r"(BA), [CR1_b2]"I"(ADC0_CR1_b2 -BA), [START_w]"I"(ADC0_START_w -BA), [STA_h0]"I"(ADC0_STA_h0 -BA), [SUM0_h0]"I"(ADC0_SUM0_h0 -BA)
+    : "r0","r1"
+  );
 }
 
 

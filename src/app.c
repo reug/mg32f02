@@ -122,7 +122,11 @@ void adc_test_sum_cont() {
   char s[8];
   adc_init();
   while (1) {
-    d = adc_measure_sum_cont(8); // Result sum
+    adc_start_sum0(8); // Result sum
+    // Ожидаем заданное число измерений по активации флага ADC0_SUMCF
+    while (! ( *(volatile uint16_t*)ADC0_STA_h0 & (1 << 14) ) ); // ADC0_SUMCF == 1 ?
+    d = adc_read_sum0();
+
     // Контроль пределов суммы:
     if (d<16000) {
       *(volatile uint16_t*)PB_SC_h0 = (1 << 13); // set bit 14
