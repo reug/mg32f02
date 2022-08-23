@@ -207,6 +207,10 @@ void cmp_test_ivref_gen() {
 }
 
 
+void systick_test1() {
+}
+
+
 // First function in application
 __attribute__ ((section(".app"))) // put function in the begin of .text after signature word "app_sign"
 __attribute__ ((noreturn))
@@ -243,10 +247,10 @@ void app() {
   //adc_test_scan();
   //adc_test_sum();
   //adc_test_ivr24();
-
   //cmp_test();
-  cmp_test_ivref();
-  //while (1);
-
+  //cmp_test_ivref();
   //cmp_test_ivref_gen();
+  systick_test1();
+
+  while (1);
 }
