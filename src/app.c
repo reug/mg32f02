@@ -208,6 +208,22 @@ void cmp_test_ivref_gen() {
 
 
 void systick_test1() {
+  volatile register int32_t t0,t1;
+  char s[8];
+  *(volatile uint32_t*)CPU_SYST_CSR_w = 0; // Stop timer
+  *(volatile uint32_t*)CPU_SYST_RVR_w = (1 << 24) -1; // RELOAD
+  *(volatile uint32_t*)CPU_SYST_CVR_w = 1; // Clear CURRENT
+  *(volatile uint32_t*)CPU_SYST_CSR_w = 1; // CLKSOURCE = 1 (CPU clock), ENCNT=1
+  while (1) {
+    *(volatile uint32_t*)CPU_SYST_CVR_w = 1; // Clear CURRENT
+    t0 = *(volatile uint32_t*)CPU_SYST_CVR_w;
+    delay_ms(4);
+    t1 = *(volatile uint32_t*)CPU_SYST_CVR_w;
+    strUint16(s,5,t0-t1);
+    uart_puts(PORT,s,UART_NEWLINE_CRLF);
+    delay_ms(500);
+  }
+
 }
 
 
@@ -252,5 +268,7 @@ void app() {
   //cmp_test_ivref_gen();
   systick_test1();
 
-  while (1);
+  while (1) {
+
+  }
 }
