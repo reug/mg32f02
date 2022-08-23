@@ -109,6 +109,10 @@
 			<Option compilerVar="CPP" />
 		</Unit>
 		<Unit filename="src/adc.h" />
+		<Unit filename="src/adc_test.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/adc_test.h" />
 		<Unit filename="src/api.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -153,6 +157,10 @@
 			<Option compilerVar="CPP" />
 		</Unit>
 		<Unit filename="src/ulib.h" />
+		<Unit filename="src/utils.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/utils.h" />
 		<Extensions>
 			<debugger>
 				<remote_debugging>
