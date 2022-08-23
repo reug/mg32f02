@@ -6,6 +6,10 @@
 /// IRQ Handler type
 typedef void(*handler_t)();
 
+
+/// Core handlers
+volatile handler_t hdlr_systick;
+
 /// IRQ Handlers
 volatile handler_t hdlr[32];
 
@@ -66,8 +70,21 @@ void SVC_Handler_main(uint32_t* sp) {
   switch ( ((uint8_t*)sp[6])[-2] ) {
     case SVC_HANDLER_UNSET:   hdlr[sp[0]]=0; break;
     case SVC_HANDLER_SET:     hdlr[sp[0]]=sp[1]; break;
+    case SVC_CHANDLER_UNSET:  break; // TODO
+    case SVC_CHANDLER_SET:
+      switch (sp[0]) {
+        case 15: hdlr_systick=sp[1]; break;
+      }
+      break;
   }
 }
+
+
+__attribute__ ((interrupt))
+void SysTick_Handler() {
+  if (hdlr_systick) hdlr_systick();
+}
+
 
 __attribute__ ((interrupt))
 void ADC_IRQHandler() {

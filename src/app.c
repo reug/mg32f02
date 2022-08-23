@@ -59,7 +59,7 @@ void adc_test_one() {
   while (1) {
     led1_flash();
     adc_start_one(8);
-    d=adc_samp();
+    d=adc_read();
     strUint16(s,5,d);
     uart_puts(PORT,s,UART_NEWLINE_CRLF);
     delay_ms(500);
@@ -242,11 +242,10 @@ void app() {
   //adc_test_one();
   //adc_test_scan();
   //adc_test_sum();
-  adc_test_sum_cont();
   //adc_test_ivr24();
 
   //cmp_test();
-  //cmp_test_ivref();
+  cmp_test_ivref();
   //while (1);
 
   //cmp_test_ivref_gen();

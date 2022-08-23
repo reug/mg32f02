@@ -37,11 +37,11 @@ uint16_t adc_measure_sum(uint8_t chn);
 void adc_start_sum0(uint8_t chn);
 
 /// Сброс АЦП после суммирования и получение результата в виде суммы без усреднения (деления).
-/// Готовность результата по флагу проверять отдельно, до вызова функции!
+/// Готовность результата по флагу ADC0_SUMCF проверять отдельно, до вызова функции!
 uint16_t adc_read_sum0();
 
 void adc_start_mask(uint16_t mask);
 
-uint16_t adc_temperature_cal(uint16_t d);
+//uint16_t adc_temperature_cal(uint16_t d);
 
 #endif

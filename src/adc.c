@@ -127,9 +127,11 @@ void adc_start_mask(uint16_t mask) {
 
 
 // TODO
+/*
 uint16_t adc_temperature_cal(uint16_t d) {
   uint32_t tc = *(volatile uint32_t*)ADC0_TCAL_w;
   uint32_t t0 = tc & 0x0FFF;  // ADC0_TCAL0
   uint32_t t1 = (tc >> 16) & 0x0FFF; // ADC0_TCAL1
 
 }
+*/

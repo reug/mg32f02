@@ -54,7 +54,7 @@ void __attribute__ ((interrupt, weak)) HardFault_Handler(void) {
 
 void __attribute__ ((interrupt, weak, alias("Default_Handler"))) SVC_Handler();
 void __attribute__ ((interrupt, weak, alias("Default_Handler"))) PendSV_Handler();
-void __attribute__ ((interrupt, weak, alias("Default_Handler"))) SysTick_Handler();
+void __attribute__ ((interrupt, weak, alias("Default_Handler"))) ();
 
 
 // Peripheral IRQ handlers

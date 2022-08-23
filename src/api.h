@@ -11,7 +11,9 @@
 
 /// syscalls
 enum IOSystemCalls {
-  SVC_HANDLER_UNSET =                  0,
-  SVC_HANDLER_SET   =                  1
+  SVC_HANDLER_UNSET =                 0,
+  SVC_HANDLER_SET   =                 1,
+  SVC_CHANDLER_UNSET =                2,  // Cortex-M0 core exception handler unset
+  SVC_CHANDLER_SET =                  3,  // Cortex-M0 core exception handler set
 };
 
