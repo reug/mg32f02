@@ -19,35 +19,53 @@ void uart_hdl() {
   uart_puts(PORT,s,UART_NEWLINE_CRLF);
 }
 
+
+/// Чтение значения CURRENT после сброса
+void systick_test_read_current() {
+  volatile register int32_t t0,t1;
+  char s[12];
+  *(volatile uint32_t*)CPU_SYST_CSR_w = 0; // Stop timer
+  *(volatile uint32_t*)CPU_SYST_RVR_w = 15000; //(1 << 24) -1; // RELOAD
+  *(volatile uint32_t*)CPU_SYST_CVR_w = 1; // Clear CURRENT
+  //*(volatile uint32_t*)CPU_SYST_CSR_w = 1; // CLKSOURCE = 0 (0-CK_ST, 1-CPU), ENCNT=1
+  t0 = *(volatile uint32_t*)CPU_SYST_CVR_w;
+  strUint32hex(s,t0);
+  uart_puts(PORT,s,UART_NEWLINE_CRLF);
+  while (1);
+}
+
+
 void systick_test1() {
   volatile register int32_t t0,t1;
-  char s[8];
+  char s[12];
   *(volatile uint32_t*)CPU_SYST_CSR_w = 0; // Stop timer
-  *(volatile uint32_t*)CPU_SYST_RVR_w = (1 << 24) -1; // RELOAD
+  *(volatile uint32_t*)CPU_SYST_RVR_w = 15000; //(1 << 24) -1; // RELOAD
   *(volatile uint32_t*)CPU_SYST_CVR_w = 1; // Clear CURRENT
   *(volatile uint32_t*)CPU_SYST_CSR_w = 1; // CLKSOURCE = 0 (0-CK_ST, 1-CPU), ENCNT=1
   while (1) {
     *(volatile uint32_t*)CPU_SYST_CVR_w = 1; // Clear CURRENT
     t0 = *(volatile uint32_t*)CPU_SYST_CVR_w;
-    delay_ms(4);
+    delay_ms(1);
     t1 = *(volatile uint32_t*)CPU_SYST_CVR_w;
-    strUint16(s,5,t0-t1);
+    strUint32hex(s,t0-t1);
     uart_puts(PORT,s,UART_NEWLINE_CRLF);
     delay_ms(500);
   }
-
 }
 
 
+// Обработчик исключения SysTick
 void systick_hdl() {
-  led1_flash();
+  *(volatile uint16_t*)PC_SC_h0 = 2; // set PC1
+  *(volatile uint16_t*)PC_SC_h1 = 2; // clear PC1
 }
 
-
-void systick_test2() {
-  SVC2(SVC_CHANDLER_SET,15,systick_hdl);
+// Функция тестирования SysTick Timer
+void systick_test() {
+  *(volatile uint16_t*)PC_CR1_h0 = 0x0002; // Выход таймера -> PC1
+  SVC2(SVC_CHANDLER_SET,15,systick_hdl);   // Устанавливаем обработчик исключения 15
   *(volatile uint32_t*)CPU_SYST_CSR_w = 0; // Stop timer
-  *(volatile uint32_t*)CPU_SYST_RVR_w = 1500000-1; // RELOAD
+  *(volatile uint32_t*)CPU_SYST_RVR_w = 1500-1; // RELOAD
   *(volatile uint32_t*)CPU_SYST_CVR_w = 1; // Clear CURRENT
   *(volatile uint32_t*)CPU_SYST_CSR_w = 3; // CLKSOURCE = 0 (External), TICKINT=1, ENCNT=1
   while (1) ;
@@ -64,9 +82,10 @@ void app() {
   // Выключаем светодиоды:
   *(volatile uint16_t*)PB_SC_h1 = (1 << 13) | (1 << 14);
 
-  //setup_icko();
+  setup_icko();
   //setup_ihrco();
-  //if (setup_xosc()) led1_flash(); else led2_flash();
+  if (setup_xosc()) led1_flash(); else led2_flash();
+  //while(1);
 
   // Настройка выводов URT0:
   //*(volatile uint16_t*)PB_CR8_h0 = (3 << 12) | 2; // PB8 -> URT0_TX, push pull output
@@ -86,6 +105,7 @@ void app() {
 */
   uart_puts(PORT,"Hello",UART_NEWLINE_CRLF);
 
+
   //adc_test_one();
   //adc_test_scan();
   //adc_test_sum();
@@ -94,8 +114,9 @@ void app() {
   //cmp_test();
   //cmp_test_ivref();
   //cmp_test_ivref_gen();
-  //systick_test1();
-  systick_test2();
+  systick_test();
+  //systick_test2();
+  //systick_test_read_current();
 
   while (1) {
 

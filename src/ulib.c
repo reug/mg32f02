@@ -137,13 +137,12 @@ char* strUint16hex(char* str, uint16_t num) {
 
 
 char* strUint32hex(char* str, uint32_t num) {
-  uint32_t d=num;
   uint8_t c;
   int8_t k;
   for (k=7; k>=0; k--) {
-    c=0x0F & d;
+    c=0x0F & num;
     str[k]=c + (c<10 ? 48 : 55);
-    d = d >> 4;
+    num >>= 4;
   }
   str[8]=0;
   return str+8;

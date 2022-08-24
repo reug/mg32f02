@@ -44,14 +44,11 @@ uint8_t setup_xosc() {
   *(volatile uint16_t*)PC_CR13_h0 = (1 << 12); // PC13 -> XIN
   *(volatile uint16_t*)PC_CR14_h0 = (1 << 12); // PC14 -> XOUT
 
-
-  for (d=1000; d; d--) {
-    __NOP();
-    if ((*(volatile uint8_t*)CSC_STA_b0) & 2) break;
+  d=1000;
+  // Do not check CSC_XOSCF (bit 1) here!
+  while (! (*(volatile uint32_t*)CSC_STA_b0 & 28) ) {// waiting CSC_XOSC_STA (bit 28) == 1
+    if (--d==0) return 0;
   }
-  if (d==0) return 0;
-
-  //while (! (*(volatile uint8_t*)CSC_STA_b0 & 2)); // waiting CSC_XOSCF == 1 (XOSC ready)
 
   *(volatile uint16_t*)CSC_KEY_h0 = 0xA217; // unlock access to CSC regs
   d=*(volatile uint32_t*)CSC_CR0_w;
