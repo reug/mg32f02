@@ -73,28 +73,69 @@ void systick_test() {
 }
 
 
-void rtc_isr() {
-}
-
-
-///
-void rtc_test1() {
-  // Используем сигнал CK_UT (Unit clock) для тактирования RTC
-  csc_set_ck_ut();
+/// Вывод частоты тактирования на RTC_OUT
+void rtc_test_clock() {
   rtc_init();
   rtc_write_unlock();
+  // Вариант на 1000 Гц от CK_UT 4 кГц
+  csc_set_ck_ut();
   *(volatile uint8_t*)RTC_CLK_b0 =
       RTC_CLK_CK_PDIV_div1_b0 |
       RTC_CLK_CK_DIV_div4_b0 |
-      RTC_CLK_CK_SEL_ck_ut_b0;
+      RTC_CLK_CK_SEL_ck_ut_b0;   // Используем сигнал CK_UT (Unit clock) для тактирования RTC
+  // Вариант на 1500 кГц от CK_APB 12 МГц
+//  *(volatile uint8_t*)RTC_CLK_b0 =
+//      RTC_CLK_CK_PDIV_div1_b0 |
+//      RTC_CLK_CK_DIV_div8_b0 |
+//      RTC_CLK_CK_SEL_ck_apb_b0;
   *(volatile uint8_t*)RTC_CR0_b0 =
       RTC_CR0_EN_enable_b0;// RTC_EN = 1
   rtc_write_lock();
-  //SVC2(SVC_HANDLER_SET,1,rtc_isr);
-  //rtc_set_int(RTC_INT_PC_IE_enable_b0);
   rtc_out(RTC_CR0_OUT_SEL_pc_b1); // PC (CK_RTC_INT)
+}
+
+#define RTC_ALARM_ADD 15000 // 10 мс
 
 
+void rtc_hdl() {
+  //*(volatile uint16_t*)PB_SC_h0 = (1 << 13); *(volatile uint16_t*)PB_SC_h1 = (1 << 13);
+  uint32_t d;
+  d=*(volatile uint32_t*)RTC_ALM_w;
+  rtc_write_unlock();
+  if (d==1000*RTC_ALARM_ADD) {
+    d=0;
+    *(volatile uint32_t*)RTC_RLR_w=0;
+    *(volatile uint8_t*)RTC_CR1_b0 = 1; // RTC_RC_START
+  }
+  *(volatile uint8_t*)RTC_CR0_b0 &= ~RTC_CR0_ALM_EN_enable_b0;
+  *(volatile uint32_t*)RTC_ALM_w= d + RTC_ALARM_ADD;
+  *(volatile uint8_t*)RTC_CR0_b0 |= RTC_CR0_ALM_EN_enable_b0;
+  rtc_write_lock();
+  *(volatile uint8_t*)RTC_STA_b0 = RTC_STA_ALMF_mask_b0; // Clear ALMF flag
+}
+
+
+/// Тестирование режима ALARM с прерыванием
+void rtc_test_alarm() {
+  rtc_init();
+  rtc_write_unlock();
+  // Вариант на 1500 кГц от CK_APB 12 МГц
+  *(volatile uint8_t*)RTC_CLK_b0 =
+      RTC_CLK_CK_PDIV_div1_b0 |
+      RTC_CLK_CK_DIV_div8_b0 |
+      RTC_CLK_CK_SEL_ck_apb_b0;
+  *(volatile uint32_t*)RTC_ALM_w = RTC_ALARM_ADD; // Alarm через 10 мс
+  *(volatile uint32_t*)RTC_CR0_w =
+      //RTC_CR0_OUT_LCK_un_locked_w | RTC_CR0_OUT_STA_1_w |    // RTC_OUT_LCK = 1 & RTC_OUT_STA = 1
+      RTC_CR0_RCR_MDS_forced_reload_w |  // RTC_RCR_MDS = 2 (Force Reload)
+      RTC_CR0_ALM_EN_enable_w |          // Включаем режим ALARM
+      RTC_CR0_EN_enable_w;               // RTC_EN = 1
+  rtc_write_lock();
+
+  SVC2(SVC_HANDLER_SET,1,rtc_hdl);
+  rtc_set_int(RTC_INT_ALM_IE_enable_b0);
+  rtc_out(RTC_CR0_OUT_SEL_alm_b1); // Alarm
+  //rtc_out(RTC_CR0_OUT_SEL_pc_b1); // PC (CK_RTC_INT)
 }
 
 
@@ -102,6 +143,15 @@ void rtc_test1() {
 __attribute__ ((section(".app"))) // put function in the begin of .text after signature word "app_sign"
 __attribute__ ((noreturn))
 void app() {
+
+/*
+  // Проверка выводов PB8 и PB9
+  *(volatile uint16_t*)PB_CR8_h0 = 2; // PB8 -> push pull output
+  *(volatile uint16_t*)PB_CR9_h0 = 2; // PB9 -> push pull output
+  *(volatile uint16_t*)PB_SC_h0 = (3 << 8);
+  while (1);
+*/
+
   // Настройка выводов для LED D1, D2:
   *(volatile uint16_t*)PB_CR13_h0 = 0x0002; // PB13 -> push-pull output
   *(volatile uint16_t*)PB_CR14_h0 = 0x0002; // PB14 -> push-pull output
@@ -141,13 +191,16 @@ void app() {
   //cmp_test_ivref_gen();
   //systick_test();
   //systick_test2();
-  ////*(volatile uint16_t*)PD_CR10_h0 = 2; // PD10: RTC_OUT, push-pull output
-  ////*(volatile uint16_t*)PD_SC_h0 = (1 << 10);
 
+  ////*(volatile uint16_t*)PD_CR10_h0 = 2;  *(volatile uint16_t*)PD_SC_h0 = (1 << 10); // PD10: push-pull output test
 
-  *(volatile uint16_t*)PB_CR8_h0 = (2 << 12) | 2; // PB8 -> RTC_OUT, push pull output
-  *(volatile uint16_t*)PB_SC_h0 = (1 << 8);
-  rtc_test1();
+  // RTC_OUT setup:
+  *(volatile uint16_t*)PD_CR10_h0 = (5 << 12) | 2; // PD10: RTC_OUT, push-pull output
+  // Альтернативный вариант:
+  // *(volatile uint16_t*)PB_CR8_h0 = (2 << 12) | 2; // PB8 -> RTC_OUT, push pull output
+
+  //rtc_test_clock();
+  rtc_test_alarm();
 
   while (1) {
 

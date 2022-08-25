@@ -28,6 +28,9 @@ void HardFault_Handler() {
 }
 */
 
+
+// Cortex-M0 Exceptions:
+
 // MG32F02A064 LQFP48
 __attribute__ ((naked))
 void HardFault_Handler() {
@@ -86,17 +89,22 @@ void SysTick_Handler() {
 }
 
 
+// IRQ interrupts:
+
+__attribute__ ((interrupt))
+void SYS_IRQHandler() {
+  if (hdlr[1]) hdlr[1]();
+}
+
 __attribute__ ((interrupt))
 void ADC_IRQHandler() {
   if (hdlr[10]) hdlr[10]();
 }
 
-
 __attribute__ ((interrupt))
 void URT0_IRQHandler() {
   if (hdlr[20]) hdlr[20]();
 }
-
 
 __attribute__ ((interrupt))
 void URT123_IRQHandler() {

@@ -7,9 +7,12 @@ void init_clock() {
   *((volatile uint16_t*)CSC_KEY_h0) = 0xA217; // unlock access to CSC regs
 
   // Setup CSC for PB and PC
-  *((volatile uint32_t*)CSC_AHB_w) |= 2 | 4; // CSC_IOPB_EN = 1, CSC_IOPC_EN = 1
+  *((volatile uint32_t*)CSC_AHB_w) |=
+    CSC_AHB_IOPB_EN_enable_w | // CSC_IOPB_EN = 1
+    CSC_AHB_IOPC_EN_enable_w | // CSC_IOPC_EN = 1
+    CSC_AHB_IOPD_EN_enable_w;   // CSC_IOPD_EN = 1
 
-  *((volatile uint16_t*)CSC_KEY_h0) = 0x1111; // lock access to CSC regs
+  *((volatile uint16_t*)CSC_KEY_h0) = 0; // lock access to CSC regs
 }
 
 
@@ -22,8 +25,8 @@ void setup_icko() {
   //*(volatile uint32_t*)CSC_CKO_w = (0x0 << 4) | (2 << 2) | 1; // CK_MAIN, DIV=4, CSC_CKO_EN = 1
   *(volatile uint8_t*)CSC_CKO_w =
     //CSC_CKO_CKO_SEL_ck_ls_b0 | // CK_LS output
-    //CSC_CKO_CKO_SEL_ck_hs_b0 | // CK_HS output
-    CSC_CKO_CKO_SEL_ck_xosc_b0 | // CK_HS output
+    CSC_CKO_CKO_SEL_ck_hs_b0 | // CK_HS output
+    //CSC_CKO_CKO_SEL_ck_xosc_b0 | // CK_HS output
     CSC_CKO_CKO_DIV_div4_b0 |  // DIV8
     CSC_CKO_CKO_EN_enable_b0;
 
