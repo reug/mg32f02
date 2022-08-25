@@ -11,6 +11,13 @@ void debug(char label, uint16_t d) {
   uart_puts(PORT, s, UART_NEWLINE_CRLF);
 }
 
+void debug32(char label, uint32_t d) {
+  char s[12];
+  s[0]=label; s[1]=' ';
+  strUint32hex(s+2,d); s[10]=0;
+  uart_puts(PORT, s, UART_NEWLINE_CRLF);
+}
+
 void led1_flash() {
   *(volatile uint16_t*)PB_SC_h0 = (1 << 13); // set bit 13
   delay_ms(100);

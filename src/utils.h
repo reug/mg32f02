@@ -15,6 +15,9 @@
 /// Вывод 16-битного числа в URT<PORT> в hex и dec
 void debug(char label, uint16_t d);
 
+/// Вывод 32-битного числа в URT<PORT> в hex
+void debug32(char label, uint32_t d);
+
 /// Включение светодиода D1 на 100 мс
 void led1_flash();
 

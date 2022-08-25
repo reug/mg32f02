@@ -19,4 +19,13 @@ uint8_t setup_xosc();
 /// Включение умножения частоты на основе PLL (x2)
 void setup_pll();
 
+/// Включение сигнала CK_UT на 4 кГц
+void csc_set_ck_ut();
+
+/// Включение XOSC без выбора его в качестве источника
+void csc_xosc_init();
+
+/// Выбор XOSC в качестве источника CK_HS
+void csc_xosc_select();
+
 #endif

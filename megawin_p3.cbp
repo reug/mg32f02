@@ -136,6 +136,10 @@
 			<Option compilerVar="CC" />
 			<Option target="default" />
 		</Unit>
+		<Unit filename="src/rtc.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/rtc.h" />
 		<Unit filename="src/startup.c">
 			<Option compilerVar="CC" />
 			<Option target="default" />

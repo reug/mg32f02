@@ -6,6 +6,7 @@
 #include "init.h"
 #include "utils.h"
 #include "adc_test.h"
+#include "MG32x02z_RTC.h"
 
 
 // Mark first word with signature "Application is present" (nop; nop: 0x46c046c0)
@@ -72,6 +73,31 @@ void systick_test() {
 }
 
 
+void rtc_isr() {
+}
+
+
+///
+void rtc_test1() {
+  // Используем сигнал CK_UT (Unit clock) для тактирования RTC
+  csc_set_ck_ut();
+  rtc_init();
+  rtc_write_unlock();
+  *(volatile uint8_t*)RTC_CLK_b0 =
+      RTC_CLK_CK_PDIV_div1_b0 |
+      RTC_CLK_CK_DIV_div4_b0 |
+      RTC_CLK_CK_SEL_ck_ut_b0;
+  *(volatile uint8_t*)RTC_CR0_b0 =
+      RTC_CR0_EN_enable_b0;// RTC_EN = 1
+  rtc_write_lock();
+  //SVC2(SVC_HANDLER_SET,1,rtc_isr);
+  //rtc_set_int(RTC_INT_PC_IE_enable_b0);
+  rtc_out(RTC_CR0_OUT_SEL_pc_b1); // PC (CK_RTC_INT)
+
+
+}
+
+
 // First function in application
 __attribute__ ((section(".app"))) // put function in the begin of .text after signature word "app_sign"
 __attribute__ ((noreturn))
@@ -103,8 +129,7 @@ void app() {
   // Включаем прерывание в модуле NVIC:
   *(volatile uint32_t*)CPU_ISER_w = (1 << 20); // SETENA 20
 */
-  uart_puts(PORT,"Hello",UART_NEWLINE_CRLF);
-
+  uart_puts(PORT,"RTC test",UART_NEWLINE_CRLF);
 
   //adc_test_one();
   //adc_test_scan();
@@ -114,9 +139,15 @@ void app() {
   //cmp_test();
   //cmp_test_ivref();
   //cmp_test_ivref_gen();
-  systick_test();
+  //systick_test();
   //systick_test2();
-  //systick_test_read_current();
+  ////*(volatile uint16_t*)PD_CR10_h0 = 2; // PD10: RTC_OUT, push-pull output
+  ////*(volatile uint16_t*)PD_SC_h0 = (1 << 10);
+
+
+  *(volatile uint16_t*)PB_CR8_h0 = (2 << 12) | 2; // PB8 -> RTC_OUT, push pull output
+  *(volatile uint16_t*)PB_SC_h0 = (1 << 8);
+  rtc_test1();
 
   while (1) {
 
