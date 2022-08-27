@@ -14,7 +14,7 @@ void rtc_init() {
 }
 
 
-// NO-CMSIS
+// NON-CMSIS
 void rtc_set_int(uint8_t flags) {
   RH(RTC_KEY_h0) = 0xA217; // unlock access to regs
   // включаем прерывания в модуле:
@@ -50,9 +50,8 @@ void rtc_write_lock() {
 }
 
 
-void rtc_out(uint8_t out_sel) {
+void rtc_set_out(uint8_t out_mode) {
   RH(RTC_KEY_h0) = 0xA217; // unlock access to regs
-  // включаем прерывания в модуле:
-  RB(RTC_CR0_b1) |= out_sel; // RTC_OUT_SEL
+  RB(RTC_CR0_b1) = out_mode; // RTC_OUT mode
   RH(RTC_KEY_h0) = 0; // lock access to regs
 }

@@ -15,8 +15,9 @@ void rtc_write_unlock();
 /// Блокировка записи
 void rtc_write_lock();
 
-/// Подключение выхода. Сигнал определяется out_sel (0-3) согласно формату RTC_OUT_SEL.
-/// Разблокировка не требуется.
-void rtc_out(uint8_t out_sel);
+/// Подключение выхода. Задаются согласно формату RTC_CR0_b1:
+/// RTC_OUT_LCK (7) | RTC_OUT_STA (6) | RTC_TS_TRGS (4-5) | RTC_OUT_SEL (0-1)
+/// Разблокировка не требуется. При изменении RTC_OUT_STA также устанавливать RTC_OUT_LCK.
+void rtc_set_out(uint8_t out_mode);
 
 #endif // RTC_H

@@ -80,40 +80,43 @@ void rtc_test_clock() {
   rtc_init();
   rtc_write_unlock();
   // Вариант на 1000 Гц от CK_UT 4 кГц
-  csc_set_ck_ut();
-  RB(RTC_CLK_b0) =
-      RTC_CLK_CK_PDIV_div1_b0 |
-      RTC_CLK_CK_DIV_div4_b0 |
-      RTC_CLK_CK_SEL_ck_ut_b0;   // Используем сигнал CK_UT (Unit clock) для тактирования RTC
-  // Вариант на 1500 кГц от CK_APB 12 МГц
+//  csc_set_ck_ut();
 //  RB(RTC_CLK_b0) =
 //      RTC_CLK_CK_PDIV_div1_b0 |
-//      RTC_CLK_CK_DIV_div8_b0 |
-//      RTC_CLK_CK_SEL_ck_apb_b0;
+//      RTC_CLK_CK_DIV_div4_b0 |
+//      RTC_CLK_CK_SEL_ck_ut_b0;   // Используем сигнал CK_UT (Unit clock) для тактирования RTC
+  // Вариант на 1500 кГц от CK_APB 12 МГц
+  RB(RTC_CLK_b0) =
+      RTC_CLK_CK_PDIV_div1_b0 |
+      RTC_CLK_CK_DIV_div8_b0 |
+      RTC_CLK_CK_SEL_ck_apb_b0;
   RB(RTC_CR0_b0) =
       RTC_CR0_EN_enable_b0;// RTC_EN = 1
   rtc_write_lock();
-  rtc_out(RTC_CR0_OUT_SEL_pc_b1); // PC (CK_RTC_INT)
+  rtc_set_out(RTC_CR0_OUT_SEL_pc_b1); // PC (CK_RTC_INT)
 }
+
 
 #define RTC_ALARM_ADD 15000 // 10 мс
 
-
 void rtc_hdl() {
-  //RH(PB_SC_h0 = (1 << 13); RH(PB_SC_h1 = (1 << 13); // Тестовый сигнал прерывания
+  RH(PB_SC_h0) = (1 << 13); // Тестовый сигнал прерывания PB13 HI
   uint32_t d;
   d=RW(RTC_ALM_w);
   rtc_write_unlock();
-  if (d==1000*RTC_ALARM_ADD) {
+  if (d == 1000*RTC_ALARM_ADD) {
     d=0;
     RW(RTC_RLR_w)=0;
-    RB(RTC_CR1_b0) = 1; // RTC_RC_START
+    //RB(RTC_CR1_b0) = 1; // RTC_RC_START
   }
-  RB(RTC_CR0_b0) &= ~RTC_CR0_ALM_EN_enable_b0;
+  // Обновляем значение ALARM:
+  RB(RTC_CR0_b0) &= ~RTC_CR0_ALM_EN_enable_b0; // RTC_ALM_EN=0
   RW(RTC_ALM_w) = d + RTC_ALARM_ADD;
-  RB(RTC_CR0_b0) |= RTC_CR0_ALM_EN_enable_b0;
+  RB(RTC_CR0_b0) |= RTC_CR0_ALM_EN_enable_b0; // RTC_ALM_EN=1
+
   rtc_write_lock();
   RB(RTC_STA_b0) = RTC_STA_ALMF_mask_b0; // Clear ALMF flag
+  RH(PB_SC_h1) = (1 << 13); // Тестовый сигнал прерывания PB13 LO
 }
 
 
@@ -134,10 +137,9 @@ void rtc_test_alarm() {
       RTC_CR0_EN_enable_w;               // RTC_EN = 1
   rtc_write_lock();
 
-  SVC2(SVC_HANDLER_SET,1,rtc_hdl);
-  rtc_set_int(RTC_INT_ALM_IE_enable_b0);
-  rtc_out(RTC_CR0_OUT_SEL_alm_b1); // Alarm
-  //rtc_out(RTC_CR0_OUT_SEL_pc_b1); // PC (CK_RTC_INT)
+  SVC2(SVC_HANDLER_SET,1,rtc_hdl); // Устанавливаем обработчик прерывания
+  rtc_set_int(RTC_INT_ALM_IE_enable_b0); // Разрешаем прерывание по флагу ALMF
+  rtc_set_out(RTC_CR0_OUT_SEL_alm_b1); // Настраиваем выход RTC_OUT Alarm
 }
 
 
@@ -174,35 +176,26 @@ void app() {
 
   uart_init(PORT);
 /*
-  // Устанавливаем обработчик прерываний:
+  // Устанавливаем обработчик прерываний URT0:
   SVC2(SVC_HANDLER_SET,20,uart_hdl);
   // Включаем прерывания в модуле URT0:
   RB(URT0_INT_b0) = 0x40 | 0x01; // URT0_RX_IE | URT0_IEA
   // Включаем прерывание в модуле NVIC:
-  *(volatile uint32_t*)CPU_ISER_w = (1 << 20); // SETENA 20
+  RW(CPU_ISER_w) = (1 << 20); // SETENA 20
 */
   uart_puts(PORT,"RTC test",UART_NEWLINE_CRLF);
 
-  //adc_test_one();
-  //adc_test_scan();
-  //adc_test_sum();
-  //adc_test_sum_cont();
-  //adc_test_ivr24();
-  //cmp_test();
-  //cmp_test_ivref();
-  //cmp_test_ivref_gen();
   //systick_test();
   //systick_test2();
 
-  ////RH(PD_CR10_h0) = 2;  RH(PD_SC_h0) = (1 << 10); // PD10: push-pull output test
-
   // RTC_OUT setup:
   RH(PD_CR10_h0) = (5 << 12) | 2; // PD10: RTC_OUT, push-pull output
+  //RH(PD_CR10_h0) = 2;  RH(PD_SC_h0) = (1 << 10); // PD10: push-pull output test
   // Альтернативный вариант:
   // RH(PB_CR8_h0) = (2 << 12) | 2; // PB8 -> RTC_OUT, push pull output
 
-  //rtc_test_clock();
-  rtc_test_alarm();
+  rtc_test_clock();
+  //rtc_test_alarm();
 
   while (1) {
 
