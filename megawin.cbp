@@ -2,7 +2,7 @@
 <CodeBlocks_project_file>
 	<FileVersion major="1" minor="6" />
 	<Project>
-		<Option title="megawin_p3" />
+		<Option title="mg32f02" />
 		<Option makefile_is_custom="1" />
 		<Option pch_mode="2" />
 		<Option compiler="arm-elf-gcc" />
@@ -125,6 +125,7 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src/cmp.h" />
+		<Unit filename="src/core.h" />
 		<Unit filename="src/init.c">
 			<Option compilerVar="CC" />
 			<Option target="default" />

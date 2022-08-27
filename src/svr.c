@@ -1,6 +1,7 @@
 #include "api.h"
 #include "ulib.h"
 #include "MG32x02z__RegAddress.h"
+#include "core.h"
 
 
 /// IRQ Handler type
@@ -35,11 +36,11 @@ void HardFault_Handler() {
 __attribute__ ((naked))
 void HardFault_Handler() {
   // Включаем мигание светодиодом на PB14
-  *(volatile uint16_t*)PB_CR14_h0 = 0x0002; // PB14 -> push-pull output
+  RH(PB_CR14_h0) = 0x0002; // PB14 -> push-pull output
   while (1) {
-    *(volatile uint16_t*)PB_SC_h0 = (1 << 14); // set bit 14
+    RH(PB_SC_h0) = (1 << 14); // set bit 14
     delay_ms(100);
-    *(volatile uint16_t*)PB_SC_h1 = (1 << 14); // clear bit 14
+    RH(PB_SC_h1) = (1 << 14); // clear bit 14
     delay_ms(100);
   }
 }
