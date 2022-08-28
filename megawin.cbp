@@ -109,10 +109,6 @@
 			<Option compilerVar="CPP" />
 		</Unit>
 		<Unit filename="src/adc.h" />
-		<Unit filename="src/adc_test.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/adc_test.h" />
 		<Unit filename="src/api.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -166,6 +162,22 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src/utils.h" />
+		<Unit filename="src/wdt.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/wdt.h" />
+		<Unit filename="test/adc_test.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="test/adc_test.h" />
+		<Unit filename="test/st_rtc_test.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="test/st_rtc_test.h" />
+		<Unit filename="test/wdt_test.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="test/wdt_test.h" />
 		<Extensions>
 			<debugger>
 				<remote_debugging>

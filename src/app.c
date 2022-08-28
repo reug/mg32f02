@@ -5,7 +5,7 @@
 #include "ulib.h"
 #include "utils.h"
 //#include "adc_test.h"
-//#include "test/st_rtc_test.h"
+#include "test/st_rtc_test.h"
 #include "test/wdt_test.h"
 
 
@@ -63,6 +63,7 @@ void app() {
   uart_puts(PORT,"Hello",UART_NEWLINE_CRLF);
   debug_reset_status();
 
+  //systick_test();
   //rtc_test_clock();
   //rtc_test_alarm();
   iwdt_test();

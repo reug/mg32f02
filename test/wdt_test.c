@@ -17,6 +17,7 @@ void iwdt_hdl() {
 
 // Тест сторожевого таймера IWDT
 void iwdt_test() {
+  uint32_t i=0;
   SVC2(SVC_HANDLER_SET,1,iwdt_hdl); // устанавливаем обработчик прерывания INT_SYS
   iwdt_set_int(IWDT_INT_EW0_IE_enable_b0); // разрешаем прерывание IWDT_EW0_IE
 
@@ -37,6 +38,11 @@ void iwdt_test() {
     debug('C',RB(IWDT_CNT_b0));
     __enable_irq();
     delay_ms(50);
+    if (++i==100) {
+      iwdt_reload();
+      uart_puts(PORT,"RELOAD",UART_NEWLINE_CRLF);
+      i=0;
+    }
   }
 }
 
