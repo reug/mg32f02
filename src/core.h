@@ -1,6 +1,7 @@
 #ifndef CORE_H
 #define CORE_H
 
+#include "MG32x02z__RegAddress.h"
 
 /// Макрос 8-битного доступа к ячейке (регистру)
 #define RB(addr)      (*(volatile uint8_t*)(addr))

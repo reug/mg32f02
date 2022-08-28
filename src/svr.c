@@ -93,6 +93,11 @@ void SysTick_Handler() {
 // IRQ interrupts:
 
 __attribute__ ((interrupt))
+void WWDT_IRQHandler() {
+  if (hdlr[0]) hdlr[0]();
+}
+
+__attribute__ ((interrupt))
 void SYS_IRQHandler() {
   if (hdlr[1]) hdlr[1]();
 }
