@@ -37,7 +37,7 @@
 				<Option compiler="arm-elf-gcc" />
 				<Option use_console_runner="0" />
 				<ExtraCommands>
-					<Add after="./run_app" />
+					<Add after="#./run_app" />
 				</ExtraCommands>
 				<MakeCommands>
 					<Build command="./build_app" />
@@ -150,6 +150,10 @@
 			<Option target="svr" />
 			<Option target="premake" />
 		</Unit>
+		<Unit filename="src/timer.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/timer.h" />
 		<Unit filename="src/uart.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -174,6 +178,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="test/st_rtc_test.h" />
+		<Unit filename="test/timer_test.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="test/timer_test.h" />
 		<Unit filename="test/wdt_test.c">
 			<Option compilerVar="CC" />
 		</Unit>

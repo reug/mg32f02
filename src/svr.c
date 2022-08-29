@@ -108,6 +108,11 @@ void ADC_IRQHandler() {
 }
 
 __attribute__ ((interrupt))
+void TM0x_IRQHandler() {
+  if (hdlr[12]) hdlr[12]();
+}
+
+__attribute__ ((interrupt))
 void URT0_IRQHandler() {
   if (hdlr[20]) hdlr[20]();
 }
