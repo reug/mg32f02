@@ -66,7 +66,8 @@ void app() {
   //systick_test();
   //rtc_test_clock();
   //rtc_test_alarm();
-  iwdt_test();
+  //iwdt_test();
+  wwdt_test();
 
   while (1);
 }

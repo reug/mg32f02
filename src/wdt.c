@@ -40,3 +40,34 @@ void iwdt_set_int(uint8_t flags) {
   RW(CPU_ISER_w) = (1 << 1); // SETENA 1
 }
 
+
+void wwdt_init() {
+  RH(CSC_KEY_h0) = 0xA217; // unlock access to CSC regs
+  RB(CSC_APB0_b0) |= CSC_APB0_WWDT_EN_enable_b0; // CSC_WWDT_EN = 1
+  RH(CSC_KEY_h0) = 0; // lock access to CSC regs
+}
+
+
+void wwdt_reload() {
+  RH(WWDT_KEY_h0) = 0x2014;
+}
+
+
+void wwdt_write_unlock() {
+  RH(WWDT_KEY_h0) = 0xA217; // unlock access to regs
+}
+
+
+void wwdt_write_lock() {
+  RH(WWDT_KEY_h0) = 0; // lock access to regs
+}
+
+
+void wwdt_set_int(uint8_t flags) {
+  RH(WWDT_KEY_h0) = 0xA217; // unlock access to regs
+  RB(WWDT_INT_b0) = flags; // включаем прерывания в модуле
+  RH(WWDT_KEY_h0) = 0; // lock access to regs
+  // включаем прерывание в модуле NVIC:
+  RW(CPU_ISER_w) = 1; // SETENA 0
+}
+
