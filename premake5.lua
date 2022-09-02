@@ -45,12 +45,15 @@ workspace "Megawin"
   gccprefix (GCCPREFIX)
   defines {CHIP}
   includedirs {".", "src"}
-  buildoptions {"-mthumb", "-mcpu="..MCPU, "-Wall", "-O3", "-g", "-fno-common", "-ffunction-sections", "-fdata-sections", "-ffreestanding"}
+  buildoptions {"-mthumb", "-mcpu="..MCPU, "-Wall", "-O3", "-g", "-fno-common",
+    "-ffunction-sections", "-fdata-sections", "-ffreestanding"}
+    --"-ffunction-sections", "-fdata-sections", "-ffreestanding", "-flto"}
   linkoptions {
     "-mthumb", "-mcpu="..MCPU,
     "-L"..LDSCRIPT_PATH,
     "-Wl,--undefined=arm_stack_area",
-    "-Wl,-Map,%{cfg.buildtarget.relpath}.map",
+    "-Wl,-Map,%{cfg.buildtarget.relpath}.map"
+    --"-flto"
   }
   targetdir "bin"
   postbuildcommands {
