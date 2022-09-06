@@ -10,6 +10,8 @@ set MEM_CR1     0x4D000014
 set MEM_SKEY    0x4D00001C
 set MEM_IAPSZ   0x4D000028
 
+set OOCD_INIT_RESET {}
+
 # Gets MEM_STA register
 proc mem_status {} {
   global MEM_STA
@@ -172,10 +174,17 @@ proc read_binfile {fname {size 0}} {
 }
 
 
+# Override OpenOCD internal procedure
+proc init_reset {mode} {
+  global OOCD_INIT_RESET
+  set OOCD_INIT_RESET $mode
+}
+
+
 # Flash binary file to AP area.
 # fname - filename, addr - target's begin address, size - bytes to flash
 proc mem_ap_flash {fname addr {size 0}} {
-  global DATA
+  global DATA OOCD_INIT_RESET
   if {($addr % 1024) != 0} {
     error "addr must be aligned to 1K page"
   }
@@ -203,8 +212,15 @@ proc mem_ap_flash {fname addr {size 0}} {
       break
     }
   }
+
+  after 10
   reset
+  #set OOCD_INIT_RESET {}
+  echo "Waiting MCU ready after reset..."
+  #while {$OOCD_INIT_RESET != "run"} {}
+  vwait OOCD_INIT_RESET
   halt
+
   echo "Write..."
   # Init for write operation
   if [catch {mem_ap_init 1}] {

@@ -1,2 +1,3 @@
 #/opt/openocd/bin/openocd -s /opt/openocd -d2 -f interface/stlink.cfg -f mg32f02a064.cfg
+#/opt/openocd/bin/openocd -s /opt/openocd -d3 -f jlink.cfg -f mg32f02a064.cfg > openocd.log 2>&1 
 /opt/openocd/bin/openocd -s /opt/openocd -d2 -f jlink.cfg -f mg32f02a064.cfg

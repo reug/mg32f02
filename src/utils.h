@@ -24,5 +24,8 @@ void led1_flash();
 /// Включение светодиода D2 на 100 мс
 void led2_flash();
 
+/// Переключение двух светодиодов по 250 мс
+void led_blink();
+
 
 #endif //  UTILS_H

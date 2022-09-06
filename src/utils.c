@@ -1,6 +1,7 @@
 #include "utils.h"
 #include "ulib.h"
 #include "uart.h"
+#include "core.h"
 
 
 void debug(char label, uint16_t d) {
@@ -30,4 +31,13 @@ void led2_flash() {
   delay_ms(100);
   *(volatile uint16_t*)PB_SC_h1 = (1 << 14); // clear bit 14
   delay_ms(100);
+}
+
+void led_blink() {
+  RH(PB_SC_h1) = (1 << 14); // clear bit 14
+  RH(PB_SC_h0) = (1 << 13); // set bit 13
+  delay_ms(250);
+  RH(PB_SC_h1) = (1 << 13); // clear bit 13
+  RH(PB_SC_h0) = (1 << 14); // set bit 14
+  delay_ms(250);
 }
