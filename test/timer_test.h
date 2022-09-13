@@ -1,6 +1,9 @@
 #ifndef TIMER_TEST_H
 #define TIMER_TEST_H
 
+/// Режим Separate Mode
+void tm00_setup_separate();
+
 /// Режим Cascade Mode (2x8 bit)
 void tm00_setup_cascade();
 

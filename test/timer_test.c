@@ -26,6 +26,20 @@ void timer_hdl() {
 }
 
 
+void tm00_setup_separate() {
+  // Настройка режима работы
+  RH(TM00_CR0_h0) =
+    TM_CR0_DIR2_down_h0 |     // CT2 считает вниз
+    TM_CR0_MDS_separate_h0 |  // включаем раздельный режим
+    TM_CR0_EN2_enable_h0 |
+    TM_CR0_EN_enable_h0;
+
+  // K1 = 150, K2 = 150
+  RB(TM00_ARR_b0) = 150-1;
+  RB(TM00_PSARR_b0) = 100-1;
+}
+
+
 void tm00_setup_cascade() {
   // Настройка режима работы
   RH(TM00_CR0_h0) =
@@ -70,15 +84,20 @@ void tm00_test() {
     TM_CLK_CKI_SEL_proc_h0 | // TM00_CKI_SEL: CK_TMx_PR
     TM_CLK_CKS2_SEL_ck_int_h0 ;// TM00_CKS2_SEL: CK_INT
 
-  //tm00_setup_fullcnt();
-  tm00_setup_cascade();
+  //tm00_setup_separate();
+  //tm00_setup_cascade();
+  tm00_setup_fullcnt();
+
 
   // Настройка триггеров
   RH(PD_CR9_h0) = (0x2 << 12) | 2; // PD9: TM00_TRGO, push pull output
   RW(TM00_TRG_w) =
   //TM00_TRGO_MDS:
     //TM_TRG_TRGO_MDS_tof_w; // 0x3 = TOF : TM00_TOF (Main Timer overflow)
+    //TM_TRG_TRGO_MDS_tof2_w;
     TM_TRG_TRGO_MDS_uev_w; // 0x2 = UEV : TM00_UEV (Main Timer Update event)
+    //TM_TRG_TRGO_MDS_uev2_w; // UEV2 (Prescaler Update event)
+
 
   // Настройка выхода
   RH(PB_CR0_h0) = (0x4 << 12) | 2; // TM00_CKO, push pull output

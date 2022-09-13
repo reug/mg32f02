@@ -37,7 +37,7 @@
 				<Option compiler="arm-elf-gcc" />
 				<Option use_console_runner="0" />
 				<ExtraCommands>
-					<Add after="#./run_app" />
+					<Add after="./run_app" />
 				</ExtraCommands>
 				<MakeCommands>
 					<Build command="./build_app" />

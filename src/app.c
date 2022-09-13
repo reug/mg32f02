@@ -62,7 +62,7 @@ void app() {
   RW(CPU_ISER_w) = (1 << 20); // SETENA 20
 */
   uart_puts(PORT,"Hello",UART_NEWLINE_CRLF);
-  //tm00_test();
+  tm00_test();
 
   while (1) led_blink();
 }
