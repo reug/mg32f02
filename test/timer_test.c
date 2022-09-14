@@ -26,43 +26,39 @@ void timer_hdl() {
 }
 
 
-void tm00_setup_separate() {
+void tm00_setup_separate(uint16_t khi, uint16_t klo) {
   // Настройка режима работы
   RH(TM00_CR0_h0) =
-    TM_CR0_DIR2_down_h0 |     // CT2 считает вниз
+    TM_CR0_DIR2_up_h0 |     // CT2 считает вниз
     TM_CR0_MDS_separate_h0 |  // включаем раздельный режим
-    TM_CR0_EN2_enable_h0 |
-    TM_CR0_EN_enable_h0;
+    TM_CR0_EN2_enable_h0 |    // включаем CT2
+    TM_CR0_EN_enable_h0;      // включаем CT1
 
-  // K1 = 150, K2 = 150
-  RB(TM00_ARR_b0) = 150-1;
-  RB(TM00_PSARR_b0) = 100-1;
+  RB(TM00_ARR_b0) = khi;
+  RB(TM00_PSARR_b0) = klo;
 }
 
 
-void tm00_setup_cascade() {
+void tm00_setup_cascade(uint16_t khi, uint16_t klo) {
   // Настройка режима работы
   RH(TM00_CR0_h0) =
-    TM_CR0_MDS_cascade_h0 |  // включаем каскадный режим
-    TM_CR0_EN2_enable_h0 |
-    TM_CR0_EN_enable_h0;
+    TM_CR0_MDS_cascade_h0 |   // включаем каскадный режим
+    TM_CR0_EN2_enable_h0 |    // включаем CT1
+    TM_CR0_EN_enable_h0;      // включаем CT2
 
-  // Kmain = 15, K2 = 100, Fout = 1 kHz:
-  RB(TM00_ARR_b0) = 15-1;
-  RB(TM00_PSARR_b0) = 100-1;
+  RB(TM00_ARR_b0) = khi;
+  RB(TM00_PSARR_b0) = klo;
 }
 
 
-void tm00_setup_fullcnt() {
+void tm00_setup_fullcnt(uint32_t k) {
   // Настройка режима работы
   RH(TM00_CR0_h0) =
-    TM_CR0_MDS_full_counter_h0 |    // включаем 16-битный режим
-    //TM_CR0_EN2_enable_h0 | // необязательно для Full-Counter mode
-    TM_CR0_EN_enable_h0;
+    TM_CR0_MDS_full_counter_h0 | // включаем 16-битный режим
+    TM_CR0_EN_enable_h0;      // включаем оба счетчика
 
-  // K = 1500 (0x5DC), Fout = 1 kHz:
-  RB(TM00_ARR_b0) = 0x05;
-  RB(TM00_PSARR_b0) = 0xDC-1;
+  RB(TM00_ARR_b0) = k >> 8;
+  RB(TM00_PSARR_b0) = (k & 0xff) - 1;
 }
 
 
@@ -84,10 +80,9 @@ void tm00_test() {
     TM_CLK_CKI_SEL_proc_h0 | // TM00_CKI_SEL: CK_TMx_PR
     TM_CLK_CKS2_SEL_ck_int_h0 ;// TM00_CKS2_SEL: CK_INT
 
-  //tm00_setup_separate();
-  //tm00_setup_cascade();
-  tm00_setup_fullcnt();
-
+  //tm00_setup_separate(150-1,100-1); // K1 = 150, K2 = 100 => F1 = 10 kHz
+  //tm00_setup_cascade(15-1,100-1); // K1 = 15, K2 = 100, Fout = 1 kHz:
+  tm00_setup_fullcnt(1500); // K = 1500, Fout = 1 kHz:
 
   // Настройка триггеров
   RH(PD_CR9_h0) = (0x2 << 12) | 2; // PD9: TM00_TRGO, push pull output
@@ -119,3 +114,57 @@ void tm00_test() {
   */
 
 }
+
+
+void tm00_test_lowfreq_separate() {
+  tm00_init();
+  // Настройка тактирования: TM00_CK_TC2 - 4000 Гц
+  RH(TM00_CLK_h0) =
+    TM_CLK_CKI_DIV_div8_h0 | // TM00_CKI_DIV: DIV8
+    TM_CLK_CKI_SEL_ck_ls_h0 | // TM00_CKI_SEL: CK_TMx_PR
+    TM_CLK_CKS2_SEL_ck_int_h0 ;// TM00_CKS2_SEL: CK_INT
+
+  tm00_setup_separate(255,255); // K1 = 150, K2 = 100 => F1 = 10 kHz
+
+  while (1) {
+    debug('C',RB(TM00_PSCNT_h0));
+    delay_ms(10);
+  }
+}
+
+
+void tm00_test_lowfreq_fullcnt() {
+  int i=0;
+  tm00_init();
+  // Настройка тактирования: TM00_CK_TC2 - 4000 Гц
+  RH(TM00_CLK_h0) =
+    TM_CLK_CKI_DIV_div8_h0 | // TM00_CKI_DIV: DIV8
+    TM_CLK_CKI_SEL_ck_ls_h0 | // TM00_CKI_SEL: CK_TMx_PR
+    TM_CLK_CKS2_SEL_ck_int_h0 ;// TM00_CKS2_SEL: CK_INT
+
+  tm00_setup_fullcnt(4000); // F1 = 1 Гц
+
+  while (1) {
+    debug('C',RH(TM00_PSCNT_h0));
+    delay_ms(10);
+    /*
+    if (i++ == 5) {
+      uart_puts(PORT,"RESET",UART_NEWLINE_CRLF);
+      RB(TM00_TRG_b3) = TM_TRG_RST_SW_enable_b3; // reset on
+      RB(TM00_TRG_b3) = 0; // reset off
+      i=0;
+    }
+    */
+    if (i%16 == 0) {
+      uart_puts(PORT,"GATE1",UART_NEWLINE_CRLF);
+      RB(TM00_TRG_b3) = TM_TRG_GT_SW_enable_b3; // gate sw on
+    }
+    if (i%16 == 8) {
+      uart_puts(PORT,"GATE0",UART_NEWLINE_CRLF);
+      RB(TM00_TRG_b3) = 0;
+    }
+    i++;
+  }
+}
+
+
