@@ -64,7 +64,10 @@ void app() {
   uart_puts(PORT,"Hello",UART_NEWLINE_CRLF);
   //tm00_test();
   //tm00_test_lowfreq_separate();
-  tm00_test_lowfreq_fullcnt();
+  //tm00_test_lowfreq_fullcnt();
+
+  //timer_test_tm1x();
+  timer_test_tm2x();
 
   while (1) led_blink();
 }

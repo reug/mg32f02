@@ -108,8 +108,38 @@ void ADC_IRQHandler() {
 }
 
 __attribute__ ((interrupt))
+void DAC_IRQHandler() {
+  if (hdlr[11]) hdlr[11]();
+}
+
+__attribute__ ((interrupt))
 void TM0x_IRQHandler() {
   if (hdlr[12]) hdlr[12]();
+}
+
+__attribute__ ((interrupt))
+void TM10_IRQHandler() {
+  if (hdlr[13]) hdlr[13]();
+}
+
+__attribute__ ((interrupt))
+void TM1x_IRQHandler() {
+  if (hdlr[14]) hdlr[14]();
+}
+
+__attribute__ ((interrupt))
+void TM20_IRQHandler() {
+  if (hdlr[15]) hdlr[15]();
+}
+
+__attribute__ ((interrupt))
+void TM2x_IRQHandler() {
+  if (hdlr[16]) hdlr[16]();
+}
+
+__attribute__ ((interrupt))
+void TM3x_IRQHandler() {
+  if (hdlr[17]) hdlr[17]();
 }
 
 __attribute__ ((interrupt))

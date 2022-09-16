@@ -29,7 +29,7 @@ void timer_hdl() {
 void tm00_setup_separate(uint16_t khi, uint16_t klo) {
   // Настройка режима работы
   RH(TM00_CR0_h0) =
-    TM_CR0_DIR2_up_h0 |     // CT2 считает вниз
+    TM_CR0_DIR2_up_h0 |     // CT2 считает вверх
     TM_CR0_MDS_separate_h0 |  // включаем раздельный режим
     TM_CR0_EN2_enable_h0 |    // включаем CT2
     TM_CR0_EN_enable_h0;      // включаем CT1
@@ -43,8 +43,8 @@ void tm00_setup_cascade(uint16_t khi, uint16_t klo) {
   // Настройка режима работы
   RH(TM00_CR0_h0) =
     TM_CR0_MDS_cascade_h0 |   // включаем каскадный режим
-    TM_CR0_EN2_enable_h0 |    // включаем CT1
-    TM_CR0_EN_enable_h0;      // включаем CT2
+    TM_CR0_EN2_enable_h0 |    // включаем CT2
+    TM_CR0_EN_enable_h0;      // включаем CT1
 
   RB(TM00_ARR_b0) = khi;
   RB(TM00_PSARR_b0) = klo;
@@ -58,7 +58,45 @@ void tm00_setup_fullcnt(uint32_t k) {
     TM_CR0_EN_enable_h0;      // включаем оба счетчика
 
   RB(TM00_ARR_b0) = k >> 8;
-  RB(TM00_PSARR_b0) = (k & 0xff) - 1;
+  RB(TM00_PSARR_b0) = (k & 0xff);
+}
+
+
+void tm_setup_separate(uint8_t tm_id, uint32_t mode, uint16_t khi, uint16_t klo) {
+  register uint32_t ba = TM_BASE[tm_id]; // Base address
+  // Настройка режима работы
+  RW(ba + (TM20_CR0_w-TM20_Base)) =
+    mode |
+    TM_CR0_MDS_separate_w |  // включаем раздельный режим
+    TM_CR0_EN2_enable_w |    // включаем CT2
+    TM_CR0_EN_enable_w;      // включаем CT1
+  RH(ba + (TM20_ARR_w-TM20_Base)) = khi;
+  RH(ba + (TM20_PSARR_w-TM20_Base)) = klo;
+}
+
+
+void tm_setup_cascade(uint8_t tm_id, uint32_t mode, uint16_t khi, uint16_t klo) {
+  register uint32_t ba = TM_BASE[tm_id]; // Base address
+  RW(ba + (TM20_CR0_w-TM20_Base)) =
+    mode |
+    TM_CR0_MDS_cascade_w |   // включаем каскадный режим
+    TM_CR0_EN2_enable_w |    // включаем CT2
+    TM_CR0_EN_enable_w;      // включаем CT1
+  RH(ba + (TM20_ARR_w-TM20_Base)) = khi;
+  RH(ba + (TM20_PSARR_w-TM20_Base)) = klo;
+}
+
+
+void tm_setup_fullcnt(uint8_t tm_id, uint32_t mode, uint32_t k) {
+  register uint32_t ba = TM_BASE[tm_id]; // Base address
+  // Настройка режима работы
+  RW(ba + (TM20_CR0_w-TM20_Base)) =
+    mode |
+    TM_CR0_MDS_full_counter_w |  // включаем полный режим
+    TM_CR0_EN_enable_w;          // включаем счетчик
+
+  RH(ba + (TM20_ARR_w-TM20_Base)) = k >> 16;
+  RH(ba + (TM20_PSARR_w-TM20_Base)) = (k & 0xffff);
 }
 
 
@@ -136,7 +174,7 @@ void tm00_test_lowfreq_separate() {
 void tm00_test_lowfreq_fullcnt() {
   uint8_t f;
   int i=0;
-  tm00_init();
+  tm_init(TM00);
   // Настройка тактирования: TM00_CK_TC2 - 4000 Гц
   RH(TM00_CLK_h0) =
     TM_CLK_CKI_DIV_div8_h0 | // TM00_CKI_DIV: DIV8
@@ -169,7 +207,7 @@ void tm00_test_lowfreq_fullcnt() {
     }
     i++;
     */
-    /*
+
     // Проверка флагов TOF и TOF2
     f=RB(TM00_STA_b0);
     if (f) {
@@ -178,8 +216,54 @@ void tm00_test_lowfreq_fullcnt() {
       uart_puts(PORT,"",UART_NEWLINE_CRLF);
       RB(TM00_STA_b0)=0xff;
     }
-    */
+
   }
 }
 
 
+void timer_test_tm1x() {
+  tm_init(TM16_id);
+  // Настройка тактирования:
+  RW(TM16_CLK_w) = TM_CLK_CKI_DIV_div8_w | TM_CLK_CKI_SEL_ck_ls_w | TM_CLK_CKS2_SEL_ck_int_w;
+  tm_setup_cascade(TM16_id,0,1024,1024);
+  while (1) {
+    //debug32('S',RW(TM20_STA_w));
+    debug32('C',RW(TM16_PSCNT_w));
+    //debug('C',RH(TM20_CNT_h0));
+    delay_ms(100);
+  }
+}
+
+
+void timer_test_tm2x() {
+  uint32_t f;
+
+  // Настройка TM00_TRGO в качестве источника 10 Гц
+  tm_init(TM00_id);
+  // Настройка тактирования: TM00_CK_TC2 - 4000 Гц
+  RH(TM00_CLK_h0) = TM_CLK_CKI_DIV_div8_h0 | TM_CLK_CKI_SEL_ck_ls_h0 | TM_CLK_CKS2_SEL_ck_int_h0;
+  tm00_setup_fullcnt(2000); // F1 = 2 Гц
+  // TRGO <- TOF
+  RW(TM00_TRG_w) = TM_TRG_TRGO_MDS_uev_w;
+  // Контроль сигнала на выводе PD9 (39)
+  RH(PD_CR9_h0) = (0x2 << 12) | 2; // PD9: TM00_TRGO, push pull output
+
+  // Настройка TM20
+  tm_init(TM26_id);
+  // Настройка тактирования: TM26_CK_TC2 <- TM00_TRGO
+  RW(TM26_CLK_w) = TM_CLK_CKS2_SEL_ck_ext_w | TM_CLK_CKE_SEL_itr_w;
+  RB(TM26_TRG_b1) = TM_TRG_ITR_MUX_itr6_b1; // TM26: ITR6 = TRG0 = TM00_TRGO
+
+  //tm_setup_cascade(TM26_id,TM_CR0_DIR_up_w | TM_CR0_DIR2_up_w,5,5);
+  //tm_setup_cascade(TM26_id,TM_CR0_DIR_down_w | TM_CR0_DIR2_down_w,5,5);
+  //tm_setup_fullcnt(TM26_id,0,5);
+  tm_setup_fullcnt(TM26_id,TM_CR0_DIR_down_w,5);
+
+  while (1) {
+    f=RW(TM26_STA_w);
+    if (f) {debug32('F',f); RW(TM26_STA_w)=0xffffffff;}
+    debug32('C',RW(TM26_PSCNT_w));
+    delay_ms(100);
+  }
+
+}
