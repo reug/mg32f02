@@ -134,6 +134,7 @@ void tm00_test_lowfreq_separate() {
 
 
 void tm00_test_lowfreq_fullcnt() {
+  uint8_t f;
   int i=0;
   tm00_init();
   // Настройка тактирования: TM00_CK_TC2 - 4000 Гц
@@ -148,6 +149,7 @@ void tm00_test_lowfreq_fullcnt() {
     debug('C',RH(TM00_PSCNT_h0));
     delay_ms(10);
     /*
+    // Проверка Reset
     if (i++ == 5) {
       uart_puts(PORT,"RESET",UART_NEWLINE_CRLF);
       RB(TM00_TRG_b3) = TM_TRG_RST_SW_enable_b3; // reset on
@@ -155,6 +157,8 @@ void tm00_test_lowfreq_fullcnt() {
       i=0;
     }
     */
+    /*
+    // Проверка Gate
     if (i%16 == 0) {
       uart_puts(PORT,"GATE1",UART_NEWLINE_CRLF);
       RB(TM00_TRG_b3) = TM_TRG_GT_SW_enable_b3; // gate sw on
@@ -164,6 +168,17 @@ void tm00_test_lowfreq_fullcnt() {
       RB(TM00_TRG_b3) = 0;
     }
     i++;
+    */
+    /*
+    // Проверка флагов TOF и TOF2
+    f=RB(TM00_STA_b0);
+    if (f) {
+      if (f & TM_STA_TOF_happened_b0) uart_puts(PORT,"TOF ",UART_NEWLINE_NONE);
+      if (f & TM_STA_TOF2_happened_b0) uart_puts(PORT,"TOF2",UART_NEWLINE_NONE);
+      uart_puts(PORT,"",UART_NEWLINE_CRLF);
+      RB(TM00_STA_b0)=0xff;
+    }
+    */
   }
 }
 
