@@ -67,7 +67,8 @@ void app() {
   //tm00_test_lowfreq_fullcnt();
 
   //timer_test_tm1x();
-  timer_test_tm2x();
+  //timer_test_tm26();
+  timer_test_measure();
 
   while (1) led_blink();
 }

@@ -235,7 +235,13 @@ void timer_test_tm1x() {
 }
 
 
-void timer_test_tm2x() {
+void timer_hdl_tm26() {
+  uart_puts(PORT,"IRQ",UART_NEWLINE_CRLF);
+  RW(TM26_STA_w)=0xffffffff;
+}
+
+
+void timer_test_tm26() {
   uint32_t f;
 
   // Настройка TM00_TRGO в качестве источника 10 Гц
@@ -248,21 +254,89 @@ void timer_test_tm2x() {
   // Контроль сигнала на выводе PD9 (39)
   RH(PD_CR9_h0) = (0x2 << 12) | 2; // PD9: TM00_TRGO, push pull output
 
-  // Настройка TM20
+  // Настройка TM26
   tm_init(TM26_id);
   // Настройка тактирования: TM26_CK_TC2 <- TM00_TRGO
   RW(TM26_CLK_w) = TM_CLK_CKS2_SEL_ck_ext_w | TM_CLK_CKE_SEL_itr_w;
   RB(TM26_TRG_b1) = TM_TRG_ITR_MUX_itr6_b1; // TM26: ITR6 = TRG0 = TM00_TRGO
 
-  //tm_setup_cascade(TM26_id,TM_CR0_DIR_up_w | TM_CR0_DIR2_up_w,5,5);
+  tm_setup_cascade(TM26_id,TM_CR0_DIR_up_w | TM_CR0_DIR2_up_w,5,5);
   //tm_setup_cascade(TM26_id,TM_CR0_DIR_down_w | TM_CR0_DIR2_down_w,5,5);
   //tm_setup_fullcnt(TM26_id,0,5);
-  tm_setup_fullcnt(TM26_id,TM_CR0_DIR_down_w,5);
+  //tm_setup_fullcnt(TM26_id,TM_CR0_DIR_down_w,5);
+
+  // Настройка прерывания
+  SVC2(SVC_HANDLER_SET, TM_IRQ[TM26_id], timer_hdl_tm26); // устанавливаем обработчик прерывания
+  tm_setup_int(TM26_id, TM_INT_TIE_enable_w | TM_INT_TIE2_enable_w);
 
   while (1) {
-    f=RW(TM26_STA_w);
-    if (f) {debug32('F',f); RW(TM26_STA_w)=0xffffffff;}
+    //f=RW(TM26_STA_w);
+    //if (f) {debug32('F',f); RW(TM26_STA_w)=0xffffffff;}
+    __disable_irq();
     debug32('C',RW(TM26_PSCNT_w));
+    __enable_irq();
+    delay_ms(100);
+  }
+
+}
+
+
+/// Обработчик прерывания в режиме захвата по каналу 0
+void timer_hdl_measure() {
+  static uint32_t c;
+  uint32_t f=RW(TM26_STA_w);
+  if (f & TM_STA_CF0A_happened_w) {
+    c=(RH(TM26_CC0A_h0) << 16) | RH(TM26_CC0B_h0);
+    uart_puts(PORT,"CF0A",UART_NEWLINE_CRLF);
+  }
+  if (f & TM_STA_CF0B_happened_w) {
+    uart_puts(PORT,"CF0B",UART_NEWLINE_CRLF);
+    debug('T', ((RH(TM26_CC0A_h0) << 16) | RH(TM26_CC0B_h0)) - c);
+  }
+  debug('A',RH(TM26_CC0A_h0));
+  debug('B',RH(TM26_CC0B_h0));
+  RW(TM26_STA_w)=0xffffffff; // сброс всех флагов
+}
+
+
+/// Тестирование функции захвата на TM26
+void timer_test_measure() {
+  uint32_t f;
+
+  // Настройка TM00_TRGO в качестве источника 1 МГц
+
+  tm_init(TM00_id);
+  // Настройка тактирования: TM00_CK_TC2 - 12 МГц
+  RH(TM00_CLK_h0) = TM_CLK_CKI_DIV_div1_h0 | TM_CLK_CKI_SEL_proc_h0 | TM_CLK_CKS2_SEL_ck_int_h0;
+  tm00_setup_fullcnt(12-1); // F1 = 1 МГц
+  // TRGO <- TOF
+  RW(TM00_TRG_w) = TM_TRG_TRGO_MDS_uev_w;
+  // Контроль сигнала на выводе PD9 (39)
+  RH(PD_CR9_h0) = (0x2 << 12) | 2; // PD9: TM00_TRGO, push pull output
+
+  // Настройка TM26
+
+  tm_init(TM26_id);
+  // Настройка тактирования: TM26_CK_TC2 <- TM00_TRGO
+  RW(TM26_CLK_w) = TM_CLK_CKS2_SEL_ck_ext_w | TM_CLK_CKE_SEL_itr_w;
+  RB(TM26_TRG_b1) = TM_TRG_ITR_MUX_itr6_b1; // TM26: ITR6 = TRG0 = TM00_TRGO
+
+  tm_setup_fullcnt(TM26_id,TM_CR0_DIR_up_w,0xffffffff);
+
+  // Настройка режима захвата на канале 0 по обоим фронтам от сигнала IC0
+  RB(TM26_CCMDS_b0) = TM_CCMDS_CC0_MDS_16bit_ic_b0;
+  RW(TM26_ICCR_w) = TM_ICCR_IC0_TRGS_dual_edge_w | TM_ICCR_IC0_MUX_ic00_w;  // IC0
+  // Настройка входного сигнала TM26_IC0 на пин PB0
+  RH(PB_CR0_h0) = (6 << 12) | (1 << 5) | 3; // TM26_IC0, digital input + pull-up
+
+  // Настройка прерывания по событиям CC0A, CC0B
+  SVC2(SVC_HANDLER_SET, TM_IRQ[TM26_id], timer_hdl_measure); // устанавливаем обработчик прерывания
+  tm_setup_int(TM26_id, TM_INT_CC0_IE_enable_w);
+
+  while (1) {
+    __disable_irq();
+    debug32('C',RW(TM26_PSCNT_w));
+    __enable_irq();
     delay_ms(100);
   }
 

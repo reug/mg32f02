@@ -36,7 +36,7 @@ void tm_init(uint8_t tm_id) {
 
 
 void tm_setup_int(uint8_t tm_id, uint32_t flags) {
-  RW(TM_BASE[tm_id]+TM00_INT_w-TM00_STA_w) = flags; // включаем прерывания в модуле
+  RW(TM_BASE[tm_id]+TM00_INT_w-TM00_STA_w) = flags | TM_INT_IEA_enable_w; // включаем прерывания в модуле
   // включаем прерывание в модуле NVIC:
   RW(CPU_ISER_w) = (1 << TM_IRQ[tm_id]); // SETENA
 }

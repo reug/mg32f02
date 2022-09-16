@@ -43,7 +43,10 @@ void tm00_test_lowfreq_fullcnt();
 /// Тест таймеров 1
 void timer_test_tm1x();
 
-void timer_test_tm2x();
+void timer_test_tm26();
+
+/// Измерение длительности импульсов
+void timer_test_measure();
 
 
 #endif //  TIMER_TEST_H
