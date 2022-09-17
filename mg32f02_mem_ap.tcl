@@ -1,6 +1,7 @@
 # OpenOCD/Tcl Library for Megawin MG32F02 chips
 # (C) 2022, reug@mail.ru
-# Version: 2.1.0
+
+set VERSION "2.2.0"
 
 set MEM_STA     0x4D000000
 set MEM_INT     0x4D000004
@@ -184,12 +185,18 @@ proc init_reset {mode} {
 # Flash binary file to AP area.
 # fname - filename, addr - target's begin address, size - bytes to flash
 proc mem_ap_flash {fname addr {size 0}} {
-  global DATA OOCD_INIT_RESET
+  global DATA OOCD_INIT_RESET PAGESIZE
+  if {$PAGESIZE > 0} {set PS $PAGESIZE} {
+    echo "PAGESIZE is not set! Using 512"
+    set PS 512
+  }
   if {($addr % 1024) != 0} {
     error "addr must be aligned to 1K page"
   }
+
   set nb [read_binfile $fname $size]
   halt
+
   echo "Setup for erase..."
   # Init for erase operation
   if [catch {mem_ap_init 2}] {
@@ -202,10 +209,10 @@ proc mem_ap_flash {fname addr {size 0}} {
     return
   }
   # Number of pages to erase:
-  set np [expr {$nb/1024 + ($nb%1024 ? 1 : 0)}]
+  set np [expr {$nb/$PS + ($nb % $PS ? 1 : 0)}]
   echo "Pages: $np"
   for {set i 0} {$i < $np} {incr i} {
-    set a [expr {$addr+$i*1024}]
+    set a [expr {$addr + $i * $PS}]
     echo "addr: [format "0x%08X" $a]"
     if [catch {write_memory $a 32 0xffffffff}] {
       print_memstatus
@@ -248,3 +255,5 @@ proc mem_ap_flash {fname addr {size 0}} {
   echo "Done"
 }
 
+echo "MG32F02 V.$VERSION library by reug"
+echo "PAGESIZE: $PAGESIZE"

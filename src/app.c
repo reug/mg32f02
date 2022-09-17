@@ -68,7 +68,8 @@ void app() {
 
   //timer_test_tm1x();
   //timer_test_tm26();
-  timer_test_measure();
+  //timer_test_capture();
+  timer_test_freq();
 
   while (1) led_blink();
 }

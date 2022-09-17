@@ -4,6 +4,7 @@
 #include "ulib.h"
 #include "utils.h"
 #include "MG32x02z_TM.h"
+#include "MG32x02z_APB.h"
 
 /*
 p. 393:
@@ -249,7 +250,7 @@ void timer_test_tm26() {
   // Настройка тактирования: TM00_CK_TC2 - 4000 Гц
   RH(TM00_CLK_h0) = TM_CLK_CKI_DIV_div8_h0 | TM_CLK_CKI_SEL_ck_ls_h0 | TM_CLK_CKS2_SEL_ck_int_h0;
   tm00_setup_fullcnt(2000); // F1 = 2 Гц
-  // TRGO <- TOF
+  // TRGO <- UEV
   RW(TM00_TRG_w) = TM_TRG_TRGO_MDS_uev_w;
   // Контроль сигнала на выводе PD9 (39)
   RH(PD_CR9_h0) = (0x2 << 12) | 2; // PD9: TM00_TRGO, push pull output
@@ -300,7 +301,7 @@ void timer_hdl_measure() {
 
 
 /// Тестирование функции захвата на TM26
-void timer_test_measure() {
+void timer_test_capture() {
   uint32_t f;
 
   // Настройка TM00_TRGO в качестве источника 1 МГц
@@ -338,6 +339,60 @@ void timer_test_measure() {
     debug32('C',RW(TM26_PSCNT_w));
     __enable_irq();
     delay_ms(100);
+  }
+
+}
+
+
+/// Обработчик прерывания с таймера TM10
+void timer_hdl_freq() {
+  // Считываем значение частоты с TM16:
+  debug32('F',RW(TM16_PSCNT_w));
+  // Сбрасываем счетчик в TM16:
+  RB(TM16_TRG_b3) |= TM_TRG_RST_SW_enable_b3;
+  RB(TM16_TRG_b3) &= ~TM_TRG_RST_SW_enable_b3;
+  // Сбрасываем флаг TOF в TM10:
+  RB(TM10_STA_b0)=0xff; //TM_STA_TOF_mask_b0;
+}
+
+/// Частотомер
+void timer_test_freq() {
+
+  // Настройка TM10 как формирователя секундных импульсов
+
+  tm_init(TM10_id);
+  RH(TM10_CLK_h0) = TM_CLK_CKI_DIV_div4_h0 | TM_CLK_CKI_SEL_proc_h0 | TM_CLK_CKS2_SEL_ck_int_h0;
+  // Включаем режим 32 бит:
+  tm_setup_fullcnt(TM10_id,0,3000000-1); // F(CKO1)=1 Гц
+  // TRGO <- TOF
+  RW(TM10_TRG_w) = TM_TRG_TRGO_MDS_tof_w;
+  // Контроль сигнала на выводе PC12 (30)
+  RH(PC_CR12_h0) = (5 << 12) | 2; // PC12: TM10_TRGO, push pull output
+  // Настройка прерывания TM10 по событию TOF (TIE)
+  SVC2(SVC_HANDLER_SET, 13, timer_hdl_freq); // устанавливаем обработчик прерывания
+  tm_setup_int(TM10_id, TM_INT_TIE_enable_w);
+
+
+  // Настройка TM16 как основного счетчика входных импульсов
+
+  tm_init(TM16_id);
+  // Настройка тактирования: TM16_CK_TC2 <- TM16_ETR:
+  RW(TM16_CLK_w) = TM_CLK_CKS2_SEL_ck_ext_w | TM_CLK_CKE_SEL_etr_w;
+  // Настройка входного сигнала TM16_ETR на пин PB0:
+  RH(PB_CR0_h0) = (5 << 12) | (1 << 5) | 3; // TM16_ETR, digital input + pull-up
+  // Включаем режим 32 бит:
+  tm_setup_fullcnt(TM16_id,TM_CR0_DIR_up_w,0xffffffff);
+  // Включаем входной триггер ITR6=TM10_TRGO как Gate:
+  RW(TM16_TRG_w)=
+    TM_TRG_ITR_MUX_itr6_w |     // ITR <- ITR6
+    TM_TRG_TRG_MUX_itr_w |      // TRGI <- ITR
+    TM_TRG_TRGI_MDS_gate_h_w;   // TRGI_MDS: GATE HI
+  // Включаем сигнал TM10_TRGO как ITR6 (TRG1=TM10_TRGO):
+  RB(APB_CR2_b0)= APB_CR2_ITR6_MUX_trg1_b0;
+
+  while (1) {
+    //__disable_irq(); debug32('C',RW(TM10_PSCNT_w)); __enable_irq();
+    delay_ms(200);
   }
 
 }

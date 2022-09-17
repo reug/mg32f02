@@ -46,7 +46,12 @@ void timer_test_tm1x();
 void timer_test_tm26();
 
 /// Измерение длительности импульсов
-void timer_test_measure();
+
+/// Тест функции захвата
+void timer_test_capture();
+
+/// Частотомер
+void timer_test_freq();
 
 
 #endif //  TIMER_TEST_H
