@@ -1,7 +1,7 @@
 # OpenOCD/Tcl Library for Megawin MG32F02 chips
 # (C) 2022, reug@mail.ru
 
-set VERSION "2.2.0"
+set VERSION "2.2.2"
 
 set MEM_STA     0x4D000000
 set MEM_INT     0x4D000004
@@ -105,31 +105,45 @@ proc mem_ap_init {mode} {
 
   # Set Flash Access Mode (MEM_MDS = 1 or 2)
   set w [read_memory $MEM_CR0 32 1]
-  write_memory $MEM_CR0 32 [expr {$w | ($mode << 4)}]
+  write_memory $MEM_CR0 32 [expr {($w & 0xFFFFFF0F) | ($mode << 4)}]
 }
 
 
-# Setup for write. mode - FW_SINGLE or FW_MULTI
-proc mem_ap_setwrite {mode} {
+proc mem_ap_skey {byte} {
   global MEM_SKEY
-
-  # Unlock Flash Access Sequence Key (MEM_SKEY) = 0x46
-  write_memory $MEM_SKEY 32 0x46
-
-  # (5) Single Write Access or Multiple Write Access
-  #   (a) Single Write Enable (MEM_SKEY) = 0xB9
-  #   (b) Multiple Write Enable ~ (MEM_SKEY) = 0xBE
-  write_memory $MEM_SKEY 32 $mode
+  set w [read_memory $MEM_SKEY 32 1]
+  write_memory $MEM_SKEY 32 [expr {($w & 0xFFFFFF00) | $byte}]
 }
 
 
-# Lock flash access for multiply write
+# Setup for single write
+proc mem_ap_setwrite_single {} {
+  mem_ap_skey 0x46
+  mem_ap_skey 0xB9
+}
+
+
+# Setup for multiple write
+proc mem_ap_setwrite_multiple {} {
+  mem_ap_skey 0x46
+  mem_ap_skey 0xBE
+}
+
+
+# Lock flash access for multiple write
 proc mem_ap_lock {} {
-  global MEM_SKEY
-  write_memory $MEM_SKEY 32 0x64
+  mem_ap_skey 0x64
   mem_lock
 }
 
+# Waiting ready state
+proc mem_ap_wait {} {
+  global MEM_STA
+  # Check MEM_EOPF flag...
+  while {!([read_memory $MEM_STA 32 1] & 2)} {after 1}
+  # Clear MEM_EOPF flag:
+  write_memory $MEM_STA 32 2  
+}
 
 # ISP read enable
 proc mem_isp_ren {} {
@@ -182,6 +196,27 @@ proc init_reset {mode} {
 }
 
 
+# Verify memory with file. Returns 0 if success, amount of error words else
+proc mem_ap_verify {fname addr {size 0}} {
+  global DATA
+  set ew 0
+  set nb [read_binfile $fname $size]
+  set a $addr
+  set nw [expr {$nb/4}]
+  for {set i 0} {$i < $nw} {incr i} {
+    set w [lindex $DATA $i]
+    if [catch {
+      if {[read_memory $a 32 1] != $w} {incr ew}
+    }] {
+      mem_status_print
+      break
+    }
+    incr a 4
+  }
+  return $ew
+}
+
+
 # Flash binary file to AP area.
 # fname - filename, addr - target's begin address, size - bytes to flash
 proc mem_ap_flash {fname addr {size 0}} {
@@ -190,52 +225,57 @@ proc mem_ap_flash {fname addr {size 0}} {
     echo "PAGESIZE is not set! Using 512"
     set PS 512
   }
-  if {($addr % 1024) != 0} {
-    error "addr must be aligned to 1K page"
+  if {($addr % $PS) != 0} {
+    error "addr must be aligned to $PS bytes page"
   }
 
   set nb [read_binfile $fname $size]
   halt
 
-  echo "Setup for erase..."
+  echo "ERASE..."
   # Init for erase operation
   if [catch {mem_ap_init 2}] {
     print_memstatus
     return
   }
   # Setup for multibyte
-  if [catch {mem_ap_setwrite 0xBE}] {
-    print_memstatus
-    return
-  }
+  #if [catch {mem_ap_setwrite_multiple}] {
+    #print_memstatus
+    #return
+  #}
   # Number of pages to erase:
   set np [expr {$nb/$PS + ($nb % $PS ? 1 : 0)}]
-  echo "Pages: $np"
+  echo "Pages to erase: $np"
   for {set i 0} {$i < $np} {incr i} {
     set a [expr {$addr + $i * $PS}]
-    echo "addr: [format "0x%08X" $a]"
-    if [catch {write_memory $a 32 0xffffffff}] {
+    echo "page $i, addr: [format "0x%08X" $a]"
+    if [catch {
+      mem_ap_setwrite_single
+      poll off
+      write_memory $a 32 0xffffffff
+      after 5
+      poll on
+      #mem_ap_wait
+    }] {
       print_memstatus
       break
     }
   }
 
-  after 10
-  reset
-  #set OOCD_INIT_RESET {}
-  echo "Waiting MCU ready after reset..."
-  #while {$OOCD_INIT_RESET != "run"} {}
-  vwait OOCD_INIT_RESET
-  halt
+  #reset
+  ##set OOCD_INIT_RESET {}
+  #echo "Waiting MCU ready after reset..."
+  #vwait OOCD_INIT_RESET
+  #halt
 
-  echo "Write..."
+  echo "WRITE..."
   # Init for write operation
   if [catch {mem_ap_init 1}] {
     print_memstatus
     return
   }
   # Setup for multibyte
-  if [catch {mem_ap_setwrite 0xBE}] {
+  if [catch {mem_ap_setwrite_multiple}] {
     print_memstatus
     return
   }
@@ -249,11 +289,17 @@ proc mem_ap_flash {fname addr {size 0}} {
     }
     incr a 4
   }
+
+  sleep 10
   mem_ap_lock
-  sleep 250
   reset
+  echo "Waiting MCU ready after reset..."
+  vwait OOCD_INIT_RESET
+  echo "VERIFY..."
+  set ew [mem_ap_verify $fname $addr]
+  if {$ew} {echo "VERIFY ERROR!!! $ew words mismatch!!!"} {echo "Success"}
   echo "Done"
 }
 
-echo "MG32F02 V.$VERSION library by reug"
+echo "MG32F02 Tcl library Version $VERSION by reug"
 echo "PAGESIZE: $PAGESIZE"

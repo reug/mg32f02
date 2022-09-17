@@ -392,9 +392,9 @@ void timer_test_freq() {
   // Включаем сигнал TM10_TRGO как ITR6 (TRG1=TM10_TRGO):
   RB(APB_CR2_b0)= APB_CR2_ITR6_MUX_trg1_b0;
 
-  while (1) {
-    //__disable_irq(); debug32('C',RW(TM10_PSCNT_w)); __enable_irq();
-    delay_ms(200);
-  }
+//  while (1) {
+//    //__disable_irq(); debug32('C',RW(TM10_PSCNT_w)); __enable_irq();
+//    delay_ms(200);
+//  }
 
 }

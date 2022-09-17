@@ -2,9 +2,4 @@
 TELNET="telnet 127.0.0.1 4444"
 DIR=`pwd`
 BINFILE=$DIR/bin/svr.bin
-DUMPFILE=$DIR/bin/svr.dump
-
-# TODO: set exact size in dump
-(echo "mem_ap_flash $BINFILE 0x18000000"; sleep 3; echo "dump_image $DUMPFILE 0x18000000 2048") | $TELNET
-
-cmp -l $BINFILE $DUMPFILE
+(echo "mem_ap_flash $BINFILE 0x18000000"; sleep 4;) | $TELNET
