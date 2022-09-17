@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
+
 /// libc memcpy replacement
 void *memcpy(void *dest, const void *src, size_t n);
 
@@ -35,8 +36,18 @@ char* strUint16(char* str, uint8_t width, uint16_t num);
 /// str[] should be at least 5 bytes
 char* strUint16hex(char* str, uint16_t num);
 
+/// String (dec) from 32-bit integer with zero padding
+/// str[] should be at least (width+1) bytes
+char* strUint32(char* str, uint8_t width, uint32_t num);
+
 /// String (hex) from 32-bit integer with zero padding
 /// str[] should be at least 9 bytes
 char* strUint32hex(char* str, uint32_t num);
+
+/// Division
+int32_t divs32(int32_t Dividend, int32_t Divisor);
+int32_t mods32(int32_t Dividend, int32_t Divisor);
+uint32_t divu32(uint32_t Dividend, uint32_t Divisor);
+uint32_t modu32(uint32_t Dividend, uint32_t Divisor);
 
 #endif

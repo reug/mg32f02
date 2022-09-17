@@ -28,4 +28,7 @@ void csc_xosc_init();
 /// Выбор XOSC в качестве источника CK_HS
 void csc_xosc_select();
 
+/// Включение GPL
+void gpl_init();
+
 #endif

@@ -13,6 +13,13 @@ void debug(char label, uint16_t d) {
 }
 
 void debug32(char label, uint32_t d) {
+  char s[16];
+  s[0]=label; s[1]=' ';
+  strUint32(s+2,10,d);
+  uart_puts(PORT,s,UART_NEWLINE_CRLF);
+}
+
+void debug32hex(char label, uint32_t d) {
   char s[12];
   s[0]=label; s[1]=' ';
   strUint32hex(s+2,d); s[10]=0;

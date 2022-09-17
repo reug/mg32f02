@@ -8,6 +8,7 @@
 //#include "test/st_rtc_test.h"
 //#include "test/wdt_test.h"
 #include "test/timer_test.h"
+#include "init.h"
 
 
 // Mark first word with signature "Application is present" (nop; nop: 0x46c046c0)
@@ -70,6 +71,9 @@ void app() {
   //timer_test_tm26();
   //timer_test_capture();
   timer_test_freq();
+
+  //gpl_init();  debug32('W',2612742301);  debug32('W',0xffffffff);
+
 
   while (1) led_blink();
 }

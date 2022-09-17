@@ -1,5 +1,6 @@
 #include "ulib.h"
 #include "cmsis_gcc.h"
+#include "MG32x02z_GPL_MID.h"
 
 
 void *memcpy(void *dest, const void *src, size_t n) {
@@ -136,6 +137,18 @@ char* strUint16hex(char* str, uint16_t num) {
 }
 
 
+char* strUint32(char* str, uint8_t width, uint32_t num) {
+  str[width]=0;
+  uint32_t d=1;
+  int8_t k;
+  for (k=width-1; k>=0; k--) {
+    str[k]= modu32(divu32(num,d),10) +48;
+    d *= 10;
+  }
+  return str+width;
+}
+
+
 char* strUint32hex(char* str, uint32_t num) {
   uint8_t c;
   int8_t k;
@@ -146,4 +159,21 @@ char* strUint32hex(char* str, uint32_t num) {
   }
   str[8]=0;
   return str+8;
+}
+
+
+int32_t divs32(int32_t Dividend, int32_t Divisor) {
+  return MID_GPL_HDIV_DIV(Dividend,Divisor);
+}
+
+int32_t mods32(int32_t Dividend, int32_t Divisor) {
+  return MID_GPL_HDIV_MOD(Dividend,Divisor);
+}
+
+uint32_t divu32(uint32_t Dividend, uint32_t Divisor) {
+  return MID_GPL_HDIV_UDIV(Dividend,Divisor);
+}
+
+uint32_t modu32(uint32_t Dividend, uint32_t Divisor) {
+  return MID_GPL_HDIV_UMOD(Dividend,Divisor);
 }

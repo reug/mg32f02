@@ -111,3 +111,10 @@ void csc_set_ck_ut() {
   RB(CSC_DIV_b3) = CSC_DIV_UT_DIV_div8_b3; // CSC_UT_DIV
   RH(CSC_KEY_h0) = 0; // lock access to CSC regs
 }
+
+
+void gpl_init() {
+  RH(CSC_KEY_h0) = 0xA217; // unlock access to CSC regs
+  RH(CSC_AHB_h0) |= CSC_AHB_GPL_EN_enable_h0;
+  RH(CSC_KEY_h0) = 0; // lock access to CSC regs
+}

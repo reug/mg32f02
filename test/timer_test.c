@@ -3,6 +3,7 @@
 #include "core.h"
 #include "ulib.h"
 #include "utils.h"
+#include "init.h"
 #include "MG32x02z_TM.h"
 #include "MG32x02z_APB.h"
 
@@ -357,6 +358,7 @@ void timer_hdl_freq() {
 
 /// Частотомер
 void timer_test_freq() {
+  gpl_init(); // Включаем модуль GPL для целочисленного аппаратного деления
 
   // Настройка TM10 как формирователя секундных импульсов
 
