@@ -356,7 +356,7 @@ void timer_hdl_freq() {
   RB(TM10_STA_b0)=0xff; //TM_STA_TOF_mask_b0;
 }
 
-/// Частотомер
+/// Частотомер на базе TM10 и TM16
 void timer_test_freq() {
   gpl_init(); // Включаем модуль GPL для целочисленного аппаратного деления
 
@@ -392,9 +392,65 @@ void timer_test_freq() {
   // Включаем сигнал TM10_TRGO как ITR6 (TRG1=TM10_TRGO):
   RB(APB_CR2_b0)= APB_CR2_ITR6_MUX_trg1_b0;
 
-//  while (1) {
-//    //__disable_irq(); debug32('C',RW(TM10_PSCNT_w)); __enable_irq();
-//    delay_ms(200);
-//  }
+}
 
+
+// Обработчик прерывания
+void timer_hdl_pwm() {
+  RH(PA_SC_h0) = 4; // set PA2
+  __NOP(); __NOP();
+  RH(PA_SC_h1) = 4; // clear PA2
+  RB(TM36_STA_b0) = 0xFF; // clear flags
+}
+
+
+/// Генератор ШИМ-сигнала на базе TM36
+void timer_test_pwm() {
+  // Настройка выводов МК:
+  RH(PA_CR0_h0) = (0xA << 12) | 2; // PA0 (45): TM36_OC00, канал 0
+  RH(PA_CR1_h0) = (0xA << 12) | 2; // PA1 (46): TM36_OC10, канал 1
+  RH(PA_CR2_h0) = (0x0 << 12) | 2; // PA2 (47): GPA2, software TOF
+  RH(PB_CR1_h0) = (0x7 << 12) | 2; // PB1 (10): TM36_TRGO, тактовый сигнал
+
+  // Инициализация TM36:
+  tm_init(TM36_id);
+  // Настройка тактирования: CK_TC2 <- 6 МГц
+  RW(TM36_CLK_w) = TM_CLK_CKI_DIV_div2_w | TM_CLK_CKI_SEL_proc_w | TM_CLK_CKS2_SEL_ck_int_w;
+  // TRGO <- UEV2
+  RW(TM36_TRG_w) = TM_TRG_TRGO_MDS_uev2_w;
+  // Настройка периодов: CT2 - 6000 (1 кГц), CT1 - 20 (50 Гц)
+  tm_setup_cascade(TM36_id,TM_CR0_DIR_up_w,20-1,6000-1);
+  //tm_setup_cascade(TM36_id,TM_CR0_DIR_down_w,20-1,6000-1);
+
+  // Пороги (полный цикл - 20):
+  RH(TM36_CC0B_h0)=5;
+  RH(TM36_CC1B_h0)=10;
+
+  // Начальный уровень сигналов OS0 и OS1
+//  RB(TM36_OSCR_b0)=
+//    TM_OSCR_OS1_LCK_un_locked_b0 | TM_OSCR_OS1_STA_1_b0 | // 1
+//    TM_OSCR_OS0_LCK_un_locked_b0 | TM_OSCR_OS0_STA_1_b0; // 1
+
+  // Настройка режима OC:
+//  RB(TM36_CCMDS_b0) =
+//    TM_CCMDS_CC0_MDS_16bit_oc_b0 | // канал 0
+//    TM_CCMDS_CC1_MDS_16bit_oc_b0;  // канал 1
+
+//  // Настройка режима ШИМ:
+  RB(TM36_CCMDS_b0) =
+    TM_CCMDS_CC0_MDS_16bit_pwm_b0 | // канал 0
+    TM_CCMDS_CC1_MDS_16bit_pwm_b0;  // канал 1
+  //RH(TM36_PWM_h0) = TM_PWM_PWM_MDS_center_aligned_h0; // выравнивание по-центру
+
+  // Включение инверсии:
+  //RW(TM36_OCCR1_w) = TM_OCCR1_OC0_INV_enable_w | TM_OCCR1_OC1_INV_enable_w;
+
+  // Включение выходов:
+  RW(TM36_OCCR0_w) =
+    TM_OCCR0_OC0_OE0_enable_w | // OC00 enable
+    TM_OCCR0_OC1_OE0_enable_w; // OC10 enable
+
+  // Настройка прерывания
+  SVC2(SVC_HANDLER_SET, 17, timer_hdl_pwm);   // устанавливаем обработчик прерывания
+  tm_setup_int(TM36_id, TM_INT_TIE_enable_w); // прерывание по TOF/TUF
 }

@@ -9,6 +9,7 @@ void init_clock() {
 
   // Setup CSC for PB and PC
   RW(CSC_AHB_w) |=
+    CSC_AHB_IOPA_EN_enable_w | // CSC_IOPA_EN = 1
     CSC_AHB_IOPB_EN_enable_w | // CSC_IOPB_EN = 1
     CSC_AHB_IOPC_EN_enable_w | // CSC_IOPC_EN = 1
     CSC_AHB_IOPD_EN_enable_w;   // CSC_IOPD_EN = 1

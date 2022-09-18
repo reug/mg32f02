@@ -70,7 +70,8 @@ void app() {
   //timer_test_tm1x();
   //timer_test_tm26();
   //timer_test_capture();
-  timer_test_freq();
+  //timer_test_freq();
+  timer_test_pwm();
 
   //gpl_init();  debug32('W',2612742301);  debug32('W',0xffffffff);
 

@@ -50,8 +50,10 @@ void timer_test_tm26();
 /// Тест функции захвата
 void timer_test_capture();
 
-/// Частотомер
+/// Частотомер на базе TM10 и TM16
 void timer_test_freq();
 
+/// Генератор ШИМ-сигнала на базе TM36
+void timer_test_pwm();
 
 #endif //  TIMER_TEST_H
