@@ -45,6 +45,10 @@ void timer_test_tm1x();
 
 void timer_test_tm26();
 
+/// Генератор импульсов с заданной длительностью на TM20. Выход PC0 (19).
+/// kfreq = К-т деления от 1.5 МГц.
+void timer_test_gen(uint16_t kfreq, uint16_t period, uint16_t pulse);
+
 /// Измерение длительности импульсов
 
 /// Тест функции захвата

@@ -46,6 +46,8 @@ void app() {
   //setup_ihrco();
   if (setup_xosc()) led1_flash(); else led2_flash();
 
+  gpl_init(); // Включаем модуль GPL для целочисленного аппаратного деления
+
   // Настройка выводов URT0:
   //RH(PB_CR8_h0) = (3 << 12) | 2; // PB8 -> URT0_TX, push pull output
   //RH(PB_CR9_h0) = (3 << 12) | (1 << 5) | 3; // PB9 -> URT0_RX, pull-up resister enable, digital input
@@ -69,8 +71,11 @@ void app() {
 
   //timer_test_tm1x();
   //timer_test_tm26();
-  //timer_test_capture();
-  timer_test_freq();
+
+  timer_test_gen(1500,1000,570); // Такт 1 мс (1000 Гц), T=1 с, P=0.1 c
+
+  timer_test_capture();
+  //timer_test_freq();
   //timer_test_pwm();
 
   //gpl_init();  debug32('W',2612742301);  debug32('W',0xffffffff);

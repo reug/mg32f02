@@ -283,35 +283,64 @@ void timer_test_tm26() {
 }
 
 
+void timer_test_gen(uint16_t kfreq, uint16_t period, uint16_t pulse) {
+  // Настройка выводов МК:
+  RH(PC_CR0_h0) = (0x5 << 12) | 2; // PC0 (19): TM20_OC00, канал 0
+  //RH(PA_CR1_h0) = (0xA << 12) | 2; // PA1 (46): TM36_OC10, канал 1
+  //RH(PB_CR1_h0) = (0x7 << 12) | 2; // PB1 (10): TM36_TRGO, тактовый сигнал
+
+  // Инициализация:
+  tm_init(TM20_id);
+  // Настройка тактирования: CK_TC2 <- 1.5 МГц
+  RW(TM20_CLK_w) = TM_CLK_CKI_DIV_div8_w | TM_CLK_CKI_SEL_proc_h0 | TM_CLK_CKS2_SEL_ck_int_h0;
+  // Настройка периодов:
+  tm_setup_cascade(TM20_id,0,period-1,kfreq-1);
+
+  // Пороги (полный цикл - 20):
+  RH(TM20_CC0B_h0)=pulse;
+  //RH(TM20_CC1B_h0)=10;
+
+  // Настройка режима ШИМ:
+  RB(TM20_CCMDS_b0) =
+    TM_CCMDS_CC0_MDS_16bit_pwm_b0;// | // канал 0
+    //TM_CCMDS_CC1_MDS_16bit_pwm_b0;  // канал 1
+
+  // Включение выходов:
+  RW(TM20_OCCR0_w) =
+    TM_OCCR0_OC0_OE0_enable_w;// | // OC00 enable
+    //TM_OCCR0_OC1_OE0_enable_w; // OC10 enable
+}
+
+
 /// Обработчик прерывания в режиме захвата по каналу 0
-void timer_hdl_measure() {
-  static uint32_t c;
+void timer_hdl_capture() {
+  static uint32_t a;
+  uint32_t b;
   uint32_t f=RW(TM26_STA_w);
+
   if (f & TM_STA_CF0A_happened_w) {
-    c=(RH(TM26_CC0A_h0) << 16) | RH(TM26_CC0B_h0);
-    uart_puts(PORT,"CF0A",UART_NEWLINE_CRLF);
+    a=(RH(TM26_CC0A_h0) << 16) | RH(TM26_CC0B_h0);
+    debug32('A',a);
   }
+
   if (f & TM_STA_CF0B_happened_w) {
-    uart_puts(PORT,"CF0B",UART_NEWLINE_CRLF);
-    debug('T', ((RH(TM26_CC0A_h0) << 16) | RH(TM26_CC0B_h0)) - c);
+    b=(RH(TM26_CC0A_h0) << 16) | RH(TM26_CC0B_h0);
+    debug32('B',b);
+    debug32('T',b-a);
   }
-  debug('A',RH(TM26_CC0A_h0));
-  debug('B',RH(TM26_CC0B_h0));
   RW(TM26_STA_w)=0xffffffff; // сброс всех флагов
 }
 
 
 /// Тестирование функции захвата на TM26
 void timer_test_capture() {
-  uint32_t f;
-
   // Настройка TM00_TRGO в качестве источника 1 МГц
 
   tm_init(TM00_id);
   // Настройка тактирования: TM00_CK_TC2 - 12 МГц
   RH(TM00_CLK_h0) = TM_CLK_CKI_DIV_div1_h0 | TM_CLK_CKI_SEL_proc_h0 | TM_CLK_CKS2_SEL_ck_int_h0;
   tm00_setup_fullcnt(12-1); // F1 = 1 МГц
-  // TRGO <- TOF
+  // TRGO <- UEV
   RW(TM00_TRG_w) = TM_TRG_TRGO_MDS_uev_w;
   // Контроль сигнала на выводе PD9 (39)
   RH(PD_CR9_h0) = (0x2 << 12) | 2; // PD9: TM00_TRGO, push pull output
@@ -332,15 +361,15 @@ void timer_test_capture() {
   RH(PB_CR0_h0) = (6 << 12) | (1 << 5) | 3; // TM26_IC0, digital input + pull-up
 
   // Настройка прерывания по событиям CC0A, CC0B
-  SVC2(SVC_HANDLER_SET, TM_IRQ[TM26_id], timer_hdl_measure); // устанавливаем обработчик прерывания
+  SVC2(SVC_HANDLER_SET, TM_IRQ[TM26_id], timer_hdl_capture); // устанавливаем обработчик прерывания
   tm_setup_int(TM26_id, TM_INT_CC0_IE_enable_w);
 
-  while (1) {
-    __disable_irq();
-    debug32('C',RW(TM26_PSCNT_w));
-    __enable_irq();
-    delay_ms(100);
-  }
+//  while (1) {
+//    __disable_irq();
+//    debug32('C',RW(TM26_PSCNT_w));
+//    __enable_irq();
+//    delay_ms(500);
+//  }
 
 }
 
@@ -359,8 +388,6 @@ void timer_hdl_freq() {
 
 /// Частотомер на базе TM10 и TM16
 void timer_test_freq() {
-  gpl_init(); // Включаем модуль GPL для целочисленного аппаратного деления
-
   // Настройка TM10 как формирователя секундных импульсов
 
   tm_init(TM10_id);
