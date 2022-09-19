@@ -352,9 +352,10 @@ void timer_hdl_freq() {
   // Сбрасываем счетчик в TM16:
   RB(TM16_TRG_b3) |= TM_TRG_RST_SW_enable_b3;
   RB(TM16_TRG_b3) &= ~TM_TRG_RST_SW_enable_b3;
-  // Сбрасываем флаг TOF в TM10:
+  // Сбрасываем флаг TOF и одновременно запускаем счетчик в TM10:
   RB(TM10_STA_b0)=0xff; //TM_STA_TOF_mask_b0;
 }
+
 
 /// Частотомер на базе TM10 и TM16
 void timer_test_freq() {
@@ -364,8 +365,8 @@ void timer_test_freq() {
 
   tm_init(TM10_id);
   RH(TM10_CLK_h0) = TM_CLK_CKI_DIV_div4_h0 | TM_CLK_CKI_SEL_proc_h0 | TM_CLK_CKS2_SEL_ck_int_h0;
-  // Включаем режим 32 бит:
-  tm_setup_fullcnt(TM10_id,0,3000000-1); // F(CKO1)=1 Гц
+  // Включаем режим 32 бита с функцией автостопа:
+  tm_setup_fullcnt(TM10_id, TM_CR0_ASTOP_EN_enable_h0, 3000000-1); // F(CKO1)=1 Гц
   // TRGO <- TOF
   RW(TM10_TRG_w) = TM_TRG_TRGO_MDS_tof_w;
   // Контроль сигнала на выводе PC12 (30)
@@ -374,6 +375,9 @@ void timer_test_freq() {
   SVC2(SVC_HANDLER_SET, 13, timer_hdl_freq); // устанавливаем обработчик прерывания
   tm_setup_int(TM10_id, TM_INT_TIE_enable_w);
 
+  // Настройка выхода TM10_CKO
+  //RH(PB_CR1_h0) = (0x4 << 12) | 2; // PB1: TM10_CKO, push pull output
+  //RB(TM10_CKO_b0) = TM_CKO_CKO_SEL_main_b0 | TM_CKO_CKO_EN_enable_b0;
 
   // Настройка TM16 как основного счетчика входных импульсов
 
@@ -395,7 +399,7 @@ void timer_test_freq() {
 }
 
 
-// Обработчик прерывания
+/// Обработчик прерывания
 void timer_hdl_pwm() {
   RH(PA_SC_h0) = 4; // set PA2
   __NOP(); __NOP();
@@ -440,7 +444,7 @@ void timer_test_pwm() {
   RB(TM36_CCMDS_b0) =
     TM_CCMDS_CC0_MDS_16bit_pwm_b0 | // канал 0
     TM_CCMDS_CC1_MDS_16bit_pwm_b0;  // канал 1
-  //RH(TM36_PWM_h0) = TM_PWM_PWM_MDS_center_aligned_h0; // выравнивание по-центру
+  RH(TM36_PWM_h0) = TM_PWM_PWM_MDS_center_aligned_h0; // выравнивание по центру
 
   // Включение инверсии:
   //RW(TM36_OCCR1_w) = TM_OCCR1_OC0_INV_enable_w | TM_OCCR1_OC1_INV_enable_w;
