@@ -319,14 +319,17 @@ void timer_hdl_capture() {
   uint32_t f=RW(TM26_STA_w);
 
   if (f & TM_STA_CF0A_happened_w) {
+    b=a;
     a=(RH(TM26_CC0A_h0) << 16) | RH(TM26_CC0B_h0);
     debug32('A',a);
+    debug32('T',a-b); // Период A1-A0
   }
 
   if (f & TM_STA_CF0B_happened_w) {
     b=(RH(TM26_CC0A_h0) << 16) | RH(TM26_CC0B_h0);
     debug32('B',b);
-    debug32('T',b-a);
+    debug32('P',b-a); // Длительность импульса B-A
+    uart_puts(PORT,"--",UART_NEWLINE_CRLF);
   }
   RW(TM26_STA_w)=0xffffffff; // сброс всех флагов
 }
@@ -361,7 +364,7 @@ void timer_test_capture() {
   RH(PB_CR0_h0) = (6 << 12) | (1 << 5) | 3; // TM26_IC0, digital input + pull-up
 
   // Настройка прерывания по событиям CC0A, CC0B
-  SVC2(SVC_HANDLER_SET, TM_IRQ[TM26_id], timer_hdl_capture); // устанавливаем обработчик прерывания
+  SVC2(SVC_HANDLER_SET, 16, timer_hdl_capture); // устанавливаем обработчик прерывания
   tm_setup_int(TM26_id, TM_INT_CC0_IE_enable_w);
 
 //  while (1) {
@@ -393,7 +396,8 @@ void timer_test_freq() {
   tm_init(TM10_id);
   RH(TM10_CLK_h0) = TM_CLK_CKI_DIV_div4_h0 | TM_CLK_CKI_SEL_proc_h0 | TM_CLK_CKS2_SEL_ck_int_h0;
   // Включаем режим 32 бита с функцией автостопа:
-  tm_setup_fullcnt(TM10_id, TM_CR0_ASTOP_EN_enable_h0, 3000000-1); // F(CKO1)=1 Гц
+  tm_setup_fullcnt(TM10_id, TM_CR0_ASTOP_EN_enable_h0, 2999806); // F(CKO1)=1 Гц
+  //tm_setup_fullcnt(TM10_id, TM_CR0_ASTOP_EN_enable_h0, 3000000-1); // F(CKO1)=1 Гц
   // TRGO <- TOF
   RW(TM10_TRG_w) = TM_TRG_TRGO_MDS_tof_w;
   // Контроль сигнала на выводе PC12 (30)

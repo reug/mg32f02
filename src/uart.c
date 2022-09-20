@@ -66,7 +66,7 @@ void uart_puts(uint8_t port_no, const char* s, uint32_t newline) {
   for (i=0; s[i]!=0; i++) {
     uart_tx(port_no, s[i]);
   }
-  for (i=2; i; i--) {
+  for (i=4; i; i--) {
     b=(newline & 0xFF);
     if (b) uart_tx(port_no, b); else break;
     newline >>= 8;

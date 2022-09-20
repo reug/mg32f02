@@ -68,18 +68,13 @@ void app() {
   //tm00_test();
   //tm00_test_lowfreq_separate();
   //tm00_test_lowfreq_fullcnt();
-
   //timer_test_tm1x();
   //timer_test_tm26();
+  //timer_test_gen(1500,1000,570); // Такт 1 мс (1000 Гц), T=1 с, P=0.1 c
 
-  timer_test_gen(1500,1000,570); // Такт 1 мс (1000 Гц), T=1 с, P=0.1 c
-
-  timer_test_capture();
-  //timer_test_freq();
+  timer_test_freq();
+  //timer_test_capture();
   //timer_test_pwm();
-
-  //gpl_init();  debug32('W',2612742301);  debug32('W',0xffffffff);
-
 
   while (1) led_blink();
 }
