@@ -133,6 +133,10 @@
 			<Option compilerVar="CC" />
 			<Option target="default" />
 		</Unit>
+		<Unit filename="src/nco.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/nco.h" />
 		<Unit filename="src/rtc.c">
 			<Option compilerVar="CC" />
 		</Unit>

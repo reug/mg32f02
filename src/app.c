@@ -9,6 +9,7 @@
 //#include "test/wdt_test.h"
 #include "test/timer_test.h"
 #include "init.h"
+//#include "nco.h"
 
 
 // Mark first word with signature "Application is present" (nop; nop: 0x46c046c0)
@@ -72,9 +73,18 @@ void app() {
   //timer_test_tm26();
   //timer_test_gen(1500,1000,570); // Такт 1 мс (1000 Гц), T=1 с, P=0.1 c
 
-  timer_test_freq();
+  //timer_test_freq();
   //timer_test_capture();
-  //timer_test_pwm();
+  timer_test_pwm();
+
+/*
+  // NCO test
+  RH(PB_CR3_h0) = (0x3 << 12) | 2; // PB3 -> NCO_P0 output
+  nco_init(NCO_MODE_FDC);
+  //nco_set(1024);    // 117187 Hz
+  //nco_set(8739);  // 100000 Hz
+  nco_set(2^10); // 115200 Hz
+*/
 
   while (1) led_blink();
 }
