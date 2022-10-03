@@ -113,6 +113,13 @@ void csc_set_ck_ut() {
   RH(CSC_KEY_h0) = 0; // lock access to CSC regs
 }
 
+// TODO
+//void csc_ck_ut(uint8_t mode) {
+//  RH(CSC_KEY_h0) = 0xA217; // unlock access to CSC regs
+//  RB(CSC_DIV_b3) = mode; //
+//  RH(CSC_KEY_h0) = 0; // lock access to CSC regs
+//}
+
 
 void gpl_init() {
   RH(CSC_KEY_h0) = 0xA217; // unlock access to CSC regs

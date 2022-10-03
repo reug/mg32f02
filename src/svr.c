@@ -151,3 +151,18 @@ __attribute__ ((interrupt))
 void URT123_IRQHandler() {
   if (hdlr[21]) hdlr[21]();
 }
+
+__attribute__ ((interrupt))
+void SPI0_IRQHandler() {
+  if (hdlr[24]) hdlr[24]();
+}
+
+__attribute__ ((interrupt))
+void I2C0_IRQHandler() {
+  if (hdlr[28]) hdlr[28]();
+}
+
+__attribute__ ((interrupt))
+void I2C1_IRQHandler() {
+  if (hdlr[29]) hdlr[29]();
+}

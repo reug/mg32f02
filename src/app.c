@@ -4,12 +4,13 @@
 #include "core.h"
 #include "ulib.h"
 #include "utils.h"
+#include "init.h"
 //#include "adc_test.h"
 //#include "test/st_rtc_test.h"
 //#include "test/wdt_test.h"
-#include "test/timer_test.h"
-#include "init.h"
+//#include "test/timer_test.h"
 //#include "nco.h"
+#include "test/i2c_test.h"
 
 
 // Mark first word with signature "Application is present" (nop; nop: 0x46c046c0)
@@ -29,13 +30,21 @@ __attribute__ ((section(".app"))) // put function in the begin of .text after si
 __attribute__ ((noreturn))
 void app() {
 
-/*
-  // Проверка выводов PB8 и PB9
-  RH(PB_CR8_h0 = 2; // PB8 -> push pull output
-  RH(PB_CR9_h0 = 2; // PB9 -> push pull output
-  RH(PB_SC_h0 = (3 << 8);
-  while (1);
-*/
+//  // Проверка вывода PB10 (15)
+//  RH(PB_CR10_h0) = 0x0002; // PB10 -> push-pull output
+//  RH(PB_CR11_h0) = 0x0002; // PB11 -> push-pull output
+//  // Выключаем светодиоды:
+//  RH(PB_SC_h1) = (1 << 10) | (1 << 11);
+//
+//  while (1) {
+//    delay_ms(1000);
+//    RH(PB_SC_h0) = (1 << 10);
+//    delay_ms(1000);
+//    RH(PB_SC_h1) = (1 << 10);
+//  }
+
+
+
 
   // Настройка выводов для LED D1, D2:
   RH(PB_CR13_h0) = 0x0002; // PB13 -> push-pull output
@@ -75,7 +84,8 @@ void app() {
 
   //timer_test_freq();
   //timer_test_capture();
-  timer_test_pwm();
+  //timer_test_pwm();
+  i2c_test_master();
 
 /*
   // NCO test

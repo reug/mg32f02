@@ -82,8 +82,9 @@ project "app"
   --files {"src/app.c", "src/utils.c", "src/uart.c", "test/st_rtc_test.c", "src/rtc.c", "src/init.c", "src/ulib.c"}
   --files {"src/app.c", "src/utils.c", "src/uart.c", "test/wdt_test.c", "src/wdt.c", "test/st_rtc_test.c", "src/rtc.c","src/init.c", "src/ulib.c"}
   --files {"src/app.c", "src/utils.c", "src/uart.c", "test/timer_test.c", "src/timer.c", "src/init.c", "src/ulib.c"}
-  files {"src/app.c", "src/utils.c", "src/uart.c", "test/timer_test.c", "src/timer.c", "src/init.c", "src/ulib.c", MID_SRC.."MG32x02z_GPL_MID.c"}
+  --files {"src/app.c", "src/utils.c", "src/uart.c", "test/timer_test.c", "src/timer.c", "src/init.c", "src/ulib.c", MID_SRC.."MG32x02z_GPL_MID.c"}
   --files {"src/app.c", "src/utils.c", "src/uart.c", "test/timer_test.c", "src/timer.c", "src/init.c", "src/ulib.c", "src/nco.c", MID_SRC.."MG32x02z_GPL_MID.c"}
+  files {"src/app.c", "src/utils.c", "src/uart.c", "test/i2c_test.c", "src/i2c.c", "src/init.c", "src/ulib.c", MID_SRC.."MG32x02z_GPL_MID.c"}
   linkoptions {"-nostdlib"}
   linkoptions { "-Wl,--gc-sections"}
   linkoptions {"-T mg32f02a064_app.ld"}

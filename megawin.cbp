@@ -94,6 +94,9 @@
 			<Add option="--specs=nosys.specs" />
 			<Add option="-nostdlib" />
 		</Linker>
+		<Unit filename="../../../../../../../home/reug/Eug/devel/mg32f02/test/i2c_test.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="ld/mg32f02a032_app.ld">
 			<Option target="app" />
 		</Unit>
@@ -122,6 +125,10 @@
 		</Unit>
 		<Unit filename="src/cmp.h" />
 		<Unit filename="src/core.h" />
+		<Unit filename="src/i2c.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/i2c.h" />
 		<Unit filename="src/init.c">
 			<Option compilerVar="CC" />
 			<Option target="default" />
@@ -178,6 +185,7 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="test/adc_test.h" />
+		<Unit filename="test/i2c_test.h" />
 		<Unit filename="test/st_rtc_test.c">
 			<Option compilerVar="CC" />
 		</Unit>
