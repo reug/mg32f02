@@ -30,7 +30,7 @@ void i2c_setup_int(uint32_t id, uint32_t flags) {
 }
 
 
-void i2c_master_send(uint32_t id, uint32_t data) {
+void i2c_master_start(uint32_t id) {
   RW(id+( I2C0_CR2_w -I2C0_Base)) =
       ((1 << 8) & I2C_CR2_BUF_CNT_mask_w) |
       //I2C_CR2_CMD_TC_enable_w |
@@ -40,14 +40,22 @@ void i2c_master_send(uint32_t id, uint32_t data) {
       //I2C_CR2_STO_LCK_un_locked_w | I2C_CR2_PSTO_mask_w |
       I2C_CR2_STA_LCK_un_locked_w | I2C_CR2_STA_mask_w; // STA
       //I2C_CR2_STA_LCK_un_locked_w | I2C_CR2_PSTA_mask_w; // STA
+}
 
 
-  RW(id+( I2C0_DAT_w -I2C0_Base)) = data;
-
-  //while (! (RW(id+( I2C0_STA_w -I2C0_Base)) & I2C_STA_TXF_happened_w)) ;
-  while (! (RW(id+( I2C0_STA_w -I2C0_Base)) & I2C_STA_TSCF_happened_w)) ;
-  //while (! (RW(id+( I2C0_STA_w -I2C0_Base)) & I2C_STA_RSTRF_happened_w)) ;
-  //delay_ms(5);
-
+void i2c_master_stop(uint32_t id) {
   RB(id+( I2C0_CR2_b0 -I2C0_Base)) = I2C_CR2_STO_LCK_un_locked_b0 | I2C_CR2_STO_mask_b0; // STO
+}
+
+
+void i2c_master_send(uint32_t id, uint8_t data) {
+//  uint8_t d=0,i,b;
+//  for (i=0; i<8; i++) {
+//    b = ((data << i) & 0x80) ? 1:0;
+//    d |= (b << i);
+//  }
+  RW(id+( I2C0_DAT_w -I2C0_Base)) = data; // & 0xfe;
+  while (! (RW(id+( I2C0_STA_w -I2C0_Base)) & I2C_STA_TSCF_happened_w)) ;
+  //while (! (RW(id+( I2C0_STA_w -I2C0_Base)) & I2C_STA_TXF_happened_w)) ;
+  //while (! (RW(id+( I2C0_STA_w -I2C0_Base)) & I2C_STA_RSTRF_happened_w)) ;
 }

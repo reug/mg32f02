@@ -94,9 +94,6 @@
 			<Add option="--specs=nosys.specs" />
 			<Add option="-nostdlib" />
 		</Linker>
-		<Unit filename="../../../../../../../home/reug/Eug/devel/mg32f02/test/i2c_test.c">
-			<Option compilerVar="CC" />
-		</Unit>
 		<Unit filename="ld/mg32f02a032_app.ld">
 			<Option target="app" />
 		</Unit>
@@ -165,6 +162,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src/timer.h" />
+		<Unit filename="src/tm1637.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/tm1637.h" />
 		<Unit filename="src/uart.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -185,6 +186,9 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="test/adc_test.h" />
+		<Unit filename="test/i2c_test.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="test/i2c_test.h" />
 		<Unit filename="test/st_rtc_test.c">
 			<Option compilerVar="CC" />

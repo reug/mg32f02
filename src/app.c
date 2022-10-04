@@ -11,6 +11,7 @@
 //#include "test/timer_test.h"
 //#include "nco.h"
 #include "test/i2c_test.h"
+#include "src/tm1637.h"
 
 
 // Mark first word with signature "Application is present" (nop; nop: 0x46c046c0)
@@ -85,7 +86,8 @@ void app() {
   //timer_test_freq();
   //timer_test_capture();
   //timer_test_pwm();
-  i2c_test_master();
+  //i2c_test_master();
+  tm1637_test();
 
 /*
   // NCO test
