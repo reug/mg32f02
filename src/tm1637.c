@@ -182,11 +182,17 @@ uint8_t tm1637_brightness(uint8_t b) {
 
 
 void tm1637_test() {
-  uint16_t d;
+  uint16_t d=0;
   tm1637_init();
-  for (d=0; d<10000; d++) {
-    if (tm1637_put_dec(d)) return;
-    delay_ms(100);
-  }
   tm1637_brightness(11);
+  while (1) {
+    for (; d<2000; d++) {
+      if (tm1637_put_dec(d)) return;
+      delay_ms(100);
+    }
+    for (; d!=0; d--) {
+      if (tm1637_put_dec(d)) return;
+      delay_ms(100);
+    }
+  }
 }
