@@ -122,6 +122,10 @@
 		</Unit>
 		<Unit filename="src/cmp.h" />
 		<Unit filename="src/core.h" />
+		<Unit filename="src/ds3231.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/ds3231.h" />
 		<Unit filename="src/i2c.c">
 			<Option compilerVar="CC" />
 		</Unit>

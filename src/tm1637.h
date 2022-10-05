@@ -23,7 +23,8 @@
 enum STWI_Direction {
   UNSET = 0,
   OUTPUT = 1,
-  INPUT = 3
+  //INPUT = 3 // input
+  INPUT = (3 | (1<<5)) // input + pull-up
 };
 
 /// Bit delay (internal)

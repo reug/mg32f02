@@ -63,23 +63,28 @@ void stwi_bitdelay() {
 //}
 
 void stwi_scl(uint8_t s) {
-  RH(s ? PC_SC_h0 : PC_SC_h1) = (1 << 8);
+  RH(s ? PA_SC_h0 : PA_SC_h1) = (1 << 8); // PA8
+  //RH(s ? PC_SC_h0 : PC_SC_h1) = (1 << 8); // PC8
 }
 
 void stwi_sda(uint8_t s) {
-  RH(s ? PC_SC_h0 : PC_SC_h1) = (1 << 9);
+  RH(s ? PA_SC_h0 : PA_SC_h1) = (1 << 9); // PA9
+  //RH(s ? PC_SC_h0 : PC_SC_h1) = (1 << 9); // PC9
 }
 
 void stwi_scl_dir(uint8_t d) {
-  RH(PC_CR8_h0) = d; // PC8: I2C0_SCL
+  RH(PA_CR8_h0) = d; // PA8: I2C0_SCL
+  //RH(PC_CR8_h0) = d; // PC8: I2C0_SCL
 }
 
 void stwi_sda_dir(uint8_t d) {
-  RH(PC_CR9_h0) = d; // PC9: I2C0_SDA
+  RH(PA_CR9_h0) = d; // PA9: I2C0_SDA
+  //RH(PC_CR9_h0) = d; // PC9: I2C0_SDA
 }
 
 uint8_t stwi_sda_read() {
-  return (RH(PC_IN_h0) & (1 << 9)) ? 1 : 0;
+  return (RH(PA_IN_h0) & (1 << 9)) ? 1 : 0; // PA9
+  //return (RH(PC_IN_h0) & (1 << 9)) ? 1 : 0; // PC9
 }
 
 void stwi_start() {
@@ -184,7 +189,7 @@ uint8_t tm1637_brightness(uint8_t b) {
 void tm1637_test() {
   uint16_t d=0;
   tm1637_init();
-  tm1637_brightness(11);
+  tm1637_brightness(15);
   while (1) {
     for (; d<2000; d++) {
       if (tm1637_put_dec(d)) return;

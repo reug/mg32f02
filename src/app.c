@@ -86,8 +86,8 @@ void app() {
   //timer_test_freq();
   //timer_test_capture();
   //timer_test_pwm();
-  //i2c_test_master();
-  tm1637_test();
+  i2c_test_master();
+  //tm1637_test();
 
 /*
   // NCO test
