@@ -23,7 +23,7 @@ enum DS3231_Registers {
   REG_DATE	  = 0x04,
   REG_MON		  = 0x05,
   REG_YEAR	  = 0x06,
-  REG_CON		  = 0x0e,
+  REG_CTRL	  = 0x0e,
   REG_STATUS	= 0x0f,
   REG_AGING	  = 0x10,
   REG_TEMPM	  = 0x11,
@@ -36,5 +36,8 @@ uint8_t ds3231_read(uint8_t reg);
 
 /// Write register
 void ds3231_write(uint8_t reg, uint8_t val);
+
+/// Write several registers in multi-byte mode (max len 4)
+void ds3231_write_multi(uint8_t first_reg, uint8_t len, uint32_t vals);
 
 #endif // DS3231_H

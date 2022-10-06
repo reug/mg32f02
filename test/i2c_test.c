@@ -9,10 +9,10 @@
 
 
 void time_set() {
-  //ds3231_write(REG_HOUR,0x20);  ds3231_write(REG_MIN,0x54);  ds3231_write(REG_SEC,0x50); // не работает пока
-  i2c_master_startw(DS3231_PORT, DS3231_ADDR);
-  i2c_master_send(DS3231_PORT, 4 | I2C_STOP, 0x210035 << 8 | REG_SEC ); // 0xHHMMSS
-  i2c_wait_stop(DS3231_PORT);
+  // Вариант 1: отдельные команды:
+  //ds3231_write(REG_HOUR,0x15);  ds3231_write(REG_MIN,0x39); ds3231_write(REG_SEC,0x45); // не работает пока
+  // Вариант 2: запись нескольких регистров в режиме multi-byte:
+  ds3231_write_multi(REG_SEC,3,0x154320); // 0xHHMMSS
 }
 
 
@@ -55,8 +55,10 @@ void i2c_test_master() {
 //      I2C_TMOUT_TMO_MDS_scl_low_h0 |
 //      I2C_TMOUT_TMO_EN_enable_h0;
 
-  //time_set();
+  //time_set(); return;
 
   while (1) {time_get(); delay_ms(1000); }
+
+  //debug('c',ds3231_read(REG_CTRL));  debug('s',ds3231_read(REG_STATUS));
 
 }

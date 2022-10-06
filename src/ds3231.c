@@ -25,3 +25,11 @@ void ds3231_write(uint8_t reg, uint8_t val) {
   i2c_master_send(DS3231_PORT, 2 | I2C_STOP, ((uint32_t)val << 8) | reg );
   i2c_wait_stop(DS3231_PORT);
 }
+
+
+void ds3231_write_multi(uint8_t first_reg, uint8_t len, uint32_t vals) {
+  i2c_master_startw(DS3231_PORT, DS3231_ADDR);
+  i2c_master_send(DS3231_PORT,1,first_reg);
+  i2c_master_send(DS3231_PORT, (len & 0x07) | I2C_STOP, vals);
+  i2c_wait_stop(DS3231_PORT);
+}

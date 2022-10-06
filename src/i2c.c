@@ -67,6 +67,7 @@ void i2c_wait_stop(uint32_t id) {
 
 
 void i2c_master_send(uint32_t id, uint8_t len, uint32_t data) {
+  RW(id+( I2C0_STA_w -I2C0_Base)) |= I2C_STA_TXF_mask_w; // сбрасываем TXF, иначе финальная проверка в конце функции может сработать сразу после старта
   RW(id+( I2C0_CR2_w -I2C0_Base)) =
       ((len & 0x07) << 8) | // BUF_CNT
       ((len & I2C_STOP)   ? (I2C_CR2_CMD_TC_enable_w | I2C_CR2_STO_LCK_un_locked_w | I2C_CR2_PSTO_mask_w) : 0) | // auto stop
@@ -78,6 +79,7 @@ void i2c_master_send(uint32_t id, uint8_t len, uint32_t data) {
 
 
 uint32_t i2c_master_recv(uint32_t id, uint8_t len) {
+  //RW(id+( I2C0_STA_w -I2C0_Base)) |= I2C_STA_RXF_mask_w; // сбрасываем RXF на всякий случай
   RW(id+( I2C0_CR2_w -I2C0_Base)) =
       ((len & 0x07) << 8) | // BUF_CNT
       ((len & I2C_ACK)    ? (I2C_CR2_CMD_TC_enable_w | I2C_CR2_AA_LCK_un_locked_w | I2C_CR2_PAA_mask_w) : 0) |  // ACK
