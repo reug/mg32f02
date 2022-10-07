@@ -34,6 +34,9 @@ enum DS3231_Registers {
 /// Read register
 uint8_t ds3231_read(uint8_t reg);
 
+/// Read in multi-byte mode (max len 4)
+uint32_t ds3231_read_multi(uint8_t first_reg, uint8_t len);
+
 /// Write register
 void ds3231_write(uint8_t reg, uint8_t val);
 

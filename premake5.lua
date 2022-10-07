@@ -78,6 +78,7 @@ project "svr"
 project "app"
   kind "ConsoleApp"
   language "C"
+  defines {"I2C_DEBUG"}
   --files {"src/app.c", "src/utils.c", "test/adc_test.c", "src/uart.c", "src/adc.c", "src/cmp.c", "src/init.c", "src/ulib.c"}
   --files {"src/app.c", "src/utils.c", "src/uart.c", "test/st_rtc_test.c", "src/rtc.c", "src/init.c", "src/ulib.c"}
   --files {"src/app.c", "src/utils.c", "src/uart.c", "test/wdt_test.c", "src/wdt.c", "test/st_rtc_test.c", "src/rtc.c","src/init.c", "src/ulib.c"}

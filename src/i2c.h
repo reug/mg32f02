@@ -1,7 +1,9 @@
 #ifndef MG32F02_I2C_H
 #define MG32F02_I2C_H
 
+#include "MG32x02z__RegAddress.h"
 #include "MG32x02z_I2C.h"
+#include "core.h"
 #include <stdint.h>
 
 #define I2C0_id I2C0_Base
@@ -50,5 +52,17 @@ void i2c_master_send(uint32_t id, uint8_t len, uint32_t data);
 /// Генерирует состояние STOP, если бит 7 len установлен.
 /// Блокирующая функция: ожидает флаг RXF.
 uint32_t i2c_master_recv(uint32_t id, uint8_t len);
+
+/// Возвращает I2Cx_STA
+inline
+uint32_t i2c_get_status(uint32_t id) {return RW(id+( I2C0_STA_w -I2C0_Base));}
+
+#ifdef I2C_DEBUG
+
+extern uint32_t i2c_status[16]; ///< Массив статусов I2C для дальнейшего анализа
+
+/// Выводит текстовой строки статуса в терминал в порядке убывания номера флага (3 строки по 48 символов)
+void i2c_print_status(uint32_t status);
+#endif
 
 #endif // MG32F02_I2C_H

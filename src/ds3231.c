@@ -7,14 +7,44 @@
 // http://www.rinkydinkelectronics.com/library.php?id=73
 
 
+// For debug only:
+#include "utils.h"
+
+
 uint8_t ds3231_read(uint8_t reg) {
+  //int i;
   uint32_t d;
+  //ds[0]=i2c_get_status(DS3231_PORT);
   i2c_master_startw(DS3231_PORT, DS3231_ADDR);
+  //ds[1]=i2c_get_status(DS3231_PORT);
   i2c_master_send(DS3231_PORT, 1 | I2C_START, reg);
+  //ds[2]=i2c_get_status(DS3231_PORT);
   i2c_wait_start(DS3231_PORT);
+  //ds[3]=i2c_get_status(DS3231_PORT);
 
   i2c_master_startr(DS3231_PORT, DS3231_ADDR);
+  //ds[4]=i2c_get_status(DS3231_PORT);
   d=i2c_master_recv(DS3231_PORT, 1 | I2C_STOP);
+  //ds[5]=i2c_get_status(DS3231_PORT);
+  i2c_wait_stop(DS3231_PORT);
+  //ds[6]=i2c_get_status(DS3231_PORT);
+//#ifdef I2C_DEBUG
+//  for (i=0; i<16; i++) {
+//    debug32hex('0'+i,i2c_status[i]);
+//    if ((i & 1)==0) i2c_print_status(i2c_status[i]);
+//  }
+//#endif
+  return d;
+}
+
+
+uint32_t ds3231_read_multi(uint8_t first_reg, uint8_t len) {
+  uint32_t d;
+  i2c_master_startw(DS3231_PORT, DS3231_ADDR);
+  i2c_master_send(DS3231_PORT, 1 | I2C_START, first_reg);
+  i2c_wait_start(DS3231_PORT);
+  i2c_master_startr(DS3231_PORT, DS3231_ADDR);
+  d=i2c_master_recv(DS3231_PORT, (len & 0x07) | I2C_STOP);
   i2c_wait_stop(DS3231_PORT);
   return d;
 }

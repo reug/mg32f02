@@ -10,17 +10,24 @@
 
 void time_set() {
   // Вариант 1: отдельные команды:
-  //ds3231_write(REG_HOUR,0x15);  ds3231_write(REG_MIN,0x39); ds3231_write(REG_SEC,0x45); // не работает пока
+  //ds3231_write(REG_HOUR,0x15);  ds3231_write(REG_MIN,0x39); ds3231_write(REG_SEC,0x45);
   // Вариант 2: запись нескольких регистров в режиме multi-byte:
-  ds3231_write_multi(REG_SEC,3,0x154320); // 0xHHMMSS
+  ds3231_write_multi(REG_SEC,3,0x120840); // 0xHHMMSS
 }
 
 
 void time_get() {
-  uint16_t d;
-  d=ds3231_read(REG_HOUR); debug('H',d);
-  d=ds3231_read(REG_MIN);  debug('M',d);
-  d=ds3231_read(REG_SEC);  debug('S',d);
+  // Вариант 1: отдельные команды:
+  /*
+  uint8_t d[4];
+  d[0]=ds3231_read(REG_SEC);
+  d[1]=ds3231_read(REG_MIN);
+  d[2]=ds3231_read(REG_HOUR);
+  d[3]=0;
+  debug32hex('T',*(uint32_t*)d);
+  */
+  // Вариант 2: чтение нескольких регистров в режиме multi-byte:
+  debug32hex('T',ds3231_read_multi(REG_SEC,3));
 }
 
 
