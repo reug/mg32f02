@@ -8,30 +8,38 @@
 #include "ds3231.h"
 
 
-void time_set() {
-  // Вариант 1: отдельные команды:
-  //ds3231_write(REG_HOUR,0x15);  ds3231_write(REG_MIN,0x39); ds3231_write(REG_SEC,0x45);
-  // Вариант 2: запись нескольких регистров в режиме multi-byte:
-  ds3231_write_multi(REG_SEC,3,0x120840); // 0xHHMMSS
+/// Установка времени отдельными командами. Формат: 0xHHMMSS
+void time_set_v1(uint32_t t) {
+  ds3231_write(REG_SEC, t);
+  ds3231_write(REG_MIN, t >> 8);
+  ds3231_write(REG_HOUR,t >> 16);
 }
 
+/// Установка времени в режиме multi-byte. Формат: 0xHHMMSS
+void time_set_v2(uint32_t t) {
+  ds3231_write_multi(REG_SEC,3,t);
+}
 
-void time_get() {
-  // Вариант 1: отдельные команды:
-  /*
+/// Считывание времени отдельными командами
+uint32_t time_get_v1() {
   uint8_t d[4];
   d[0]=ds3231_read(REG_SEC);
   d[1]=ds3231_read(REG_MIN);
   d[2]=ds3231_read(REG_HOUR);
   d[3]=0;
-  debug32hex('T',*(uint32_t*)d);
-  */
-  // Вариант 2: чтение нескольких регистров в режиме multi-byte:
-  debug32hex('T',ds3231_read_multi(REG_SEC,3));
+  return *(uint32_t*)d;
+failure:
+  return 0;
+}
+
+/// Считывание времени в режиме multi-byte
+uint32_t time_get_v2() {
+  return ds3231_read_multi(REG_SEC,3);
 }
 
 
 void i2c_test_master() {
+  uint32_t d;
 
   //register uint32_t ba=I2C0_Base + (DS3231_PORT ? 0x10000 : 0); // base addr
   i2c_init(DS3231_PORT);
@@ -41,6 +49,10 @@ void i2c_test_master() {
   // Альтернативный вариант:
   RH(PC_CR8_h0) = (2 << 12) | (1 << 5) | 1; // PC8: I2C0_SCL, pull-up, open drain
   RH(PC_CR9_h0) = (2 << 12) | (1 << 5) | 1; // PC9: I2C0_SDA, pull-up, open drain
+
+  //debug32hex('S',RW(DS3231_PORT+( I2C0_STA_w -I2C0_Base)));
+  //debug32hex('C',RW(DS3231_PORT+( I2C0_CLK_w -I2C0_Base)));
+  //debug32hex('M',RW(DS3231_PORT+( I2C0_CR0_w -I2C0_Base)));
   // Настройка тактирования
   i2c_setup_clock(DS3231_PORT,
       I2C_CLK_TMO_CKS_div64_h0 |  // CK_TMO: F(CK_PSC)/64 = 12500 Hz
@@ -62,10 +74,21 @@ void i2c_test_master() {
 //      I2C_TMOUT_TMO_MDS_scl_low_h0 |
 //      I2C_TMOUT_TMO_EN_enable_h0;
 
-  //time_set(); return;
-
-  while (1) {time_get(); delay_ms(1000); }
+  //time_set_v2(0x162345);
+  //return;
+  while (1) {
+    d=time_get_v2();
+    if (i2c_get_tmout(DS3231_PORT)) {
+      d=i2c_get_status(DS3231_PORT);
+      debug32hex('S',d); i2c_print_status(d);
+      led2_flash();
+      i2c_clr_status(DS3231_PORT, I2C_STA_TMOUTF_mask_w);
+    }
+    else debug32hex('T',d);
+    delay_ms(500);
+  }
 
   //debug('c',ds3231_read(REG_CTRL));  debug('s',ds3231_read(REG_STATUS));
+
 
 }

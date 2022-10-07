@@ -10,7 +10,6 @@
 // Custom configuration:
 #define DS3231_PORT   I2C0_id   // I2C module base address
 
-
 #define DS3231_ADDR   0xD0      // 0b1101000X, X - direction: 0 - write, 1 - read.
 
 

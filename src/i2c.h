@@ -28,6 +28,9 @@ void i2c_setup_clock(uint32_t id, uint16_t mode);
 /// Включение прерывания INT_I2Cx по флагам, указанным в flags согласно формату I2Cx_INT
 void i2c_setup_int(uint32_t id, uint32_t flags);
 
+/// Перезапуск модуля с текущими настройками
+void i2c_reset(uint32_t id);
+
 /// Генерирует состояние START + WRITE с указанным адресом (младший бит должен быть 0).
 void i2c_master_startw(uint32_t id, uint8_t addr);
 
@@ -53,9 +56,37 @@ void i2c_master_send(uint32_t id, uint8_t len, uint32_t data);
 /// Блокирующая функция: ожидает флаг RXF.
 uint32_t i2c_master_recv(uint32_t id, uint8_t len);
 
+
+/// Настройка таймера таймаута, режим работы mode определяется по формату младшего байта регистра I2Cx_TMOUT.
+inline
+void i2c_setup_tmout(uint32_t id, uint8_t mode) {
+  RH(id+( I2C0_TMOUT_h0 -I2C0_Base)) =
+    (125 << I2C_TMOUT_TMO_CNT_shift_h0) | // период счета 10 мс
+    mode |
+    // I2C_TMOUT_TMO_MDS_scl_low_h0 |
+    // I2C_TMOUT_TMO_MDS_scl_sda_high_h0 |
+    I2C_TMOUT_TMO_CTL_enable_h0 |
+    I2C_TMOUT_TMO_EN_enable_h0;
+}
+
+
 /// Возвращает I2Cx_STA
 inline
-uint32_t i2c_get_status(uint32_t id) {return RW(id+( I2C0_STA_w -I2C0_Base));}
+uint32_t i2c_get_status(uint32_t id) {
+  return RW(id+( I2C0_STA_w -I2C0_Base));
+}
+
+/// Возвращает 1, если таймаут, иначе 0.
+inline
+uint32_t i2c_get_tmout(uint32_t id) {
+  return (RB(id+( I2C0_STA_b0 -I2C0_Base)) & I2C_STA_TMOUTF_happened_b0) != 0;
+}
+
+/// Сбрасывает флаг(и) статуса mask по формату регистра I2Cx_STA
+inline
+void i2c_clr_status(uint32_t id, uint32_t mask) {
+  RW(id+( I2C0_STA_w -I2C0_Base)) = mask;
+}
 
 #ifdef I2C_DEBUG
 

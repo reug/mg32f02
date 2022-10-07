@@ -41,13 +41,22 @@ void i2c_setup_int(uint32_t id, uint32_t flags) {
 }
 
 
+void i2c_reset(uint32_t id) {
+  RB(id+( I2C0_CR0_b0 -I2C0_Base)) &= ~ I2C_CR0_EN_mask_b0; // выключаем модуль
+  __NOP();
+  RW(id+( I2C0_STA_w -I2C0_Base)) = 0xffffffff; // сбрасываем все флаги
+  RB(id+( I2C0_CR0_b0 -I2C0_Base)) |= I2C_CR0_EN_enable_b0; // включаем модуль
+}
+
+
 void i2c_master_startw(uint32_t id, uint8_t addr) {
   RW(id+( I2C0_CR2_w -I2C0_Base)) =
       (1 << 8) | // BUF_CNT
       I2C_CR2_STA_LCK_un_locked_w | I2C_CR2_STA_mask_w; // STA
   RB(id+( I2C0_DAT_b0 -I2C0_Base)) = addr;
+  i2c_setup_tmout(id,0);
   //while (! (RW(id+( I2C0_STA_w -I2C0_Base)) & I2C_STA_TSCF_happened_w)) ; // Работает, но лучше так:
-  while (! (RW(id+( I2C0_STA_w -I2C0_Base)) & I2C_STA_TXF_happened_w)) ;
+  while (! (RW(id+( I2C0_STA_w -I2C0_Base)) & (I2C_STA_TXF_happened_w | I2C_STA_TMOUTF_happened_w) )) ;
 }
 
 
@@ -59,8 +68,9 @@ void i2c_master_startr(uint32_t id, uint8_t addr) {
   //i2c_status[2]=RW(id+( I2C0_STA_w -I2C0_Base));  i2c_status[3]=RW(id+( I2C0_CR2_w -I2C0_Base));
   RB(id+( I2C0_DAT_b0 -I2C0_Base)) = addr | 0x01;
   //i2c_status[4]=RW(id+( I2C0_STA_w -I2C0_Base));  i2c_status[5]=RW(id+( I2C0_CR2_w -I2C0_Base));
+  i2c_setup_tmout(id,0);
   //while (! (RW(id+( I2C0_STA_w -I2C0_Base)) & I2C_STA_TSCF_happened_w)) ; // Работает, но лучше так:
-  while (! (RW(id+( I2C0_STA_w -I2C0_Base)) & I2C_STA_SADRF_happened_w)) ;
+  while (! (RW(id+( I2C0_STA_w -I2C0_Base)) & (I2C_STA_SADRF_happened_w | I2C_STA_TMOUTF_happened_w) )) ;
   //while (! (RW(id+( I2C0_STA_w -I2C0_Base)) & I2C_STA_TXF_happened_w)) ; //< НЕ РАБОТАЕТ В РЕЖИМЕ ПРИЕМА!
   //i2c_status[3]=RW(id+( I2C0_CR2_w -I2C0_Base));
 }
@@ -72,12 +82,14 @@ void i2c_master_stop(uint32_t id) {
 
 
 void i2c_wait_start(uint32_t id) {
-  while (! (RW(id+( I2C0_STA_w -I2C0_Base)) & I2C_STA_RSTRF_happened_w)) ;
+  i2c_setup_tmout(id,0);
+  while (! (RW(id+( I2C0_STA_w -I2C0_Base)) & (I2C_STA_RSTRF_happened_w | I2C_STA_TMOUTF_happened_w) )) ;
 }
 
 
 void i2c_wait_stop(uint32_t id) {
-  while (! (RW(id+( I2C0_STA_w -I2C0_Base)) & I2C_STA_STOPF_happened_w)) ;
+  i2c_setup_tmout(id,0);
+  while (! (RW(id+( I2C0_STA_w -I2C0_Base)) & (I2C_STA_STOPF_happened_w | I2C_STA_TMOUTF_happened_w) )) ;
 }
 
 
@@ -88,8 +100,8 @@ void i2c_master_send(uint32_t id, uint8_t len, uint32_t data) {
       ((len & I2C_STOP)   ? (I2C_CR2_CMD_TC_enable_w | I2C_CR2_STO_LCK_un_locked_w | I2C_CR2_PSTO_mask_w) : 0) | // auto stop
       ((len & I2C_START)  ? (I2C_CR2_CMD_TC_enable_w | I2C_CR2_STA_LCK_un_locked_w | I2C_CR2_PSTA_mask_w) : 0);  // auto restart
   RW(id+( I2C0_DAT_w -I2C0_Base)) = data;
-  //while (! (RW(id+( I2C0_STA_w -I2C0_Base)) & I2C_STA_TSCF_happened_w)) ;
-  while (! (RW(id+( I2C0_STA_w -I2C0_Base)) & I2C_STA_TXF_happened_w)) ;
+  i2c_setup_tmout(id,0);
+  while (! (RW(id+( I2C0_STA_w -I2C0_Base)) & (I2C_STA_TXF_happened_w | I2C_STA_TMOUTF_happened_w) )) ;
 }
 
 
@@ -110,7 +122,9 @@ uint32_t i2c_master_recv(uint32_t id, uint8_t len) {
 
   //i2c_status[10]=RW(id+( I2C0_STA_w -I2C0_Base));  i2c_status[11]=RW(id+( I2C0_CR2_w -I2C0_Base));
 
-  while (! (RW(id+( I2C0_STA_w -I2C0_Base)) & I2C_STA_RXF_happened_w)) ;
+  i2c_setup_tmout(id,0);
+
+  while (! (RW(id+( I2C0_STA_w -I2C0_Base)) & (I2C_STA_RXF_happened_w | I2C_STA_TMOUTF_happened_w) )) ;
   //i2c_status[12]=RW(id+( I2C0_STA_w -I2C0_Base));  i2c_status[13]=RW(id+( I2C0_CR2_w -I2C0_Base));
   return RW(id+( I2C0_DAT_w -I2C0_Base));
 
@@ -118,6 +132,11 @@ uint32_t i2c_master_recv(uint32_t id, uint8_t len) {
 
   //return d;
 }
+
+
+//void i2c_setup_tmout(uint32_t id, uint8_t mode) {
+//
+//}
 
 
 #ifdef I2C_DEBUG
