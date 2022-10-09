@@ -4,7 +4,6 @@
 #include "tm1637.h"
 #include "core.h"
 #include "ulib.h"
-#include "MG32x02z__RegAddress.h"
 
 // References:
 // 1. https://electro-dan.co.uk/electronics/PIC_simple_thermometer.aspx
@@ -166,6 +165,31 @@ uint8_t tm1637_put_dec(uint16_t v) {
     else a=digitToSegment[d];
     if (stwi_send(a)) goto failure;
     c <<= 4;
+  }
+  while (--i);
+  stwi_stop();
+  return 0;
+
+failure:
+  stwi_stop();
+  return 1;
+}
+
+
+uint8_t tm1637_put_hex(uint16_t v, uint8_t dots_on) {
+  uint8_t a,d,i=4;
+
+  stwi_start();
+  if (stwi_send(TM1637_CMD_WDAA)) goto failure;
+  stwi_stop();
+
+  stwi_start();
+  stwi_send(TM1637_CMD_ADDR);
+  do {
+    a = ((i==3) && dots_on) ? 0x80 : 0;
+    d = (v >> 12) & 0xF; // get digit
+    if (stwi_send(digitToSegment[d] | a)) goto failure;
+    v <<= 4;
   }
   while (--i);
   stwi_stop();

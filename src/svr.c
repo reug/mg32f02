@@ -1,7 +1,7 @@
 #include "api.h"
 #include "ulib.h"
-#include "MG32x02z__RegAddress.h"
 #include "core.h"
+#include "hwcf.h" // Аппаратная конфигурация
 
 
 /// IRQ Handler type
@@ -32,20 +32,17 @@ void HardFault_Handler() {
 
 // Cortex-M0 Exceptions:
 
-// MG32F02A064 LQFP48
 __attribute__ ((naked))
 void HardFault_Handler() {
-  // Включаем мигание светодиодом на PB14
-  RH(PB_CR14_h0) = 0x0002; // PB14 -> push-pull output
+  // Включаем мигание красным светодиодом D2
+  RH(HW_LED2_CRH0) = 0x0002; // pin -> push-pull output
   while (1) {
-    RH(PB_SC_h0) = (1 << 14); // set bit 14
+    RH(HW_LED2_SCH0) = HW_LED2_MASK; // set bit 14
     delay_ms(100);
-    RH(PB_SC_h1) = (1 << 14); // clear bit 14
+    RH(HW_LED2_SCH1) = HW_LED2_MASK; // clear bit 14
     delay_ms(100);
   }
 }
-
-
 
 __attribute__ ((naked))
 void SVC_Handler() {

@@ -11,8 +11,8 @@ workspace "Megawin"
   MCPU = "cortex-m0"
 
 -- Chip name:
-  --CHIP = "MG32F02A032"
-  CHIP = "MG32F02A128"
+  CHIP = "MG32F02A032"
+  --CHIP = "MG32F02A128"
 
 -- Device Family Pack path:
   DFP_PATH =  "/opt/arm/megawin/DFP/Device/MG32x02z/"
@@ -70,14 +70,18 @@ workspace "Megawin"
 project "svr"
   kind "ConsoleApp"
   language "C"
+  defines {"HWCF_A032"}
+  --defines {"HWCF_A064"}
   files {"src/init.c", "src/startup.c", "src/main.c", "src/svr.c", "src/ulib.c"}
   linkoptions {"-nostdlib"}
   linkoptions { "-Wl,--gc-sections"}
-  linkoptions {"-T mg32f02a064_svr.ld"}
+  linkoptions {"-T mg32f02a032_svr.ld"}
+  --linkoptions {"-T mg32f02a064_svr.ld"}
 
 project "app"
   kind "ConsoleApp"
   language "C"
+  defines {"HWCF_A064"}
   defines {"I2C_DEBUG"}
   --files {"src/app.c", "src/utils.c", "test/adc_test.c", "src/uart.c", "src/adc.c", "src/cmp.c", "src/init.c", "src/ulib.c"}
   --files {"src/app.c", "src/utils.c", "src/uart.c", "test/st_rtc_test.c", "src/rtc.c", "src/init.c", "src/ulib.c"}
@@ -86,7 +90,27 @@ project "app"
   --files {"src/app.c", "src/utils.c", "src/uart.c", "test/timer_test.c", "src/timer.c", "src/init.c", "src/ulib.c", MID_SRC.."MG32x02z_GPL_MID.c"}
   --files {"src/app.c", "src/utils.c", "src/uart.c", "test/timer_test.c", "src/timer.c", "src/init.c", "src/ulib.c", "src/nco.c", MID_SRC.."MG32x02z_GPL_MID.c"}
   --files {"src/app.c", "src/utils.c", "src/uart.c", "test/i2c_test.c", "src/i2c.c", "src/init.c", "src/ulib.c", MID_SRC.."MG32x02z_GPL_MID.c"}
-  files {"src/app.c", "src/utils.c", "src/uart.c", "test/i2c_test.c", "src/i2c.c", "src/init.c", "src/ulib.c", MID_SRC.."MG32x02z_GPL_MID.c", "src/tm1637.c", "src/ds3231.c"}
+  files {"src/app.c", "src/utils.c", "src/uart.c", "test/i2c_test.c", "src/i2c.c", "src/init.c", "src/ulib.c", MID_SRC.."MG32x02z_GPL_MID.c", "ic/ds3231.c"}
   linkoptions {"-nostdlib"}
   linkoptions { "-Wl,--gc-sections"}
   linkoptions {"-T mg32f02a064_app.ld"}
+
+project "clock"
+  kind "ConsoleApp"
+  language "C"
+  defines {"HWCF_A064"}
+  defines {"I2C_DEBUG"}
+  files {"src/app_clock.c", "src/utils.c", "src/uart.c", "test/i2c_test.c", "src/init.c", "src/ulib.c", MID_SRC.."MG32x02z_GPL_MID.c", "ic/tm1637.c", "ic/ds3231.c", "src/i2c.c"}
+  linkoptions {"-nostdlib"}
+  linkoptions { "-Wl,--gc-sections"}
+  linkoptions {"-T mg32f02a064_app.ld"}
+
+project "slave"
+  kind "ConsoleApp"
+  language "C"
+  defines {"HWCF_A032"}
+  defines {"I2C_DEBUG"}
+  files {"src/app_slave.c", "src/utils.c", "src/uart.c", "test/i2c_test.c", "src/init.c", "src/ulib.c", MID_SRC.."MG32x02z_GPL_MID.c", "ic/ds3231.c", "src/i2c.c"}
+  linkoptions {"-nostdlib"}
+  linkoptions { "-Wl,--gc-sections"}
+  linkoptions {"-T mg32f02a032_app.ld"}

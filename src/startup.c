@@ -37,7 +37,6 @@ void __attribute__ ((interrupt)) Default_Handler(void) {
 
 
 void __attribute__ ((interrupt)) __attribute__ ((noreturn)) Reset_Handler(void) {
-  init_clock();
   main();
   while (1);
 }

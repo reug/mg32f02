@@ -10,6 +10,7 @@
 // Максимальная частота сигнала SCL - 250 кГц.
 // Первый отправленный байт после состояния START рассматривается как команда.
 // При возникновении состояния STOP последовательный интерфейс TM1637 сбрасывается в исходное состояние.
+// Двоеточие в центре - бит 7 второй цифры.
 
 // TM1637 Commands:
 #define TM1637_CMD_WDAA   0x40 ///< Write data to display register (Automatic address adding)
@@ -64,6 +65,10 @@ void tm1637_init();
 /// Prints 4-digit interger
 /// Returns 0 if ACK, 1 - if NAK.
 uint8_t tm1637_put_dec(uint16_t v);
+
+/// Prints 4-digit 16-bit interger in HEX. If dots_on!=0 dots is on.
+/// Returns 0 if ACK, 1 - if NAK.
+uint8_t tm1637_put_hex(uint16_t v, uint8_t dots_on);
 
 /// Sets brightness
 /// Returns 0 if ACK, 1 - if NAK.

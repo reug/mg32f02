@@ -61,6 +61,40 @@
 					<SilentBuild command="premake5 gmake &gt; $(CMD_NULL)" />
 				</MakeCommands>
 			</Target>
+			<Target title="clock">
+				<Option output="megawin" prefix_auto="1" extension_auto="1" />
+				<Option type="1" />
+				<Option compiler="arm-elf-gcc" />
+				<Option use_console_runner="0" />
+				<ExtraCommands>
+					<Add after="./run_clock" />
+				</ExtraCommands>
+				<MakeCommands>
+					<Build command="make clock" />
+					<CompileFile command="make -f clock.make $file" />
+					<Clean command="make -f clock.make clean" />
+					<DistClean command="$make -f $makefile distclean$target" />
+					<AskRebuildNeeded command="make -q -f clock.make" />
+					<SilentBuild command="make clock &gt; $(CMD_NULL)" />
+				</MakeCommands>
+			</Target>
+			<Target title="slave">
+				<Option output="megawin" prefix_auto="1" extension_auto="1" />
+				<Option type="1" />
+				<Option compiler="arm-elf-gcc" />
+				<Option use_console_runner="0" />
+				<ExtraCommands>
+					<Add after="./run_slave" />
+				</ExtraCommands>
+				<MakeCommands>
+					<Build command="make slave" />
+					<CompileFile command="make -f slave.make $file" />
+					<Clean command="make -f slave.make clean" />
+					<DistClean command="$make -f $makefile distclean$target" />
+					<AskRebuildNeeded command="make -q -f slave.make" />
+					<SilentBuild command="make slave &gt; $(CMD_NULL)" />
+				</MakeCommands>
+			</Target>
 			<Environment>
 				<Variable name="TP" value="$(TARGET_COMPILER_DIR)bin/arm-none-eabi-" />
 			</Environment>
@@ -94,8 +128,18 @@
 			<Add option="--specs=nosys.specs" />
 			<Add option="-nostdlib" />
 		</Linker>
+		<Unit filename="ic/ds3231.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="ic/ds3231.h" />
+		<Unit filename="ic/tm1637.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="ic/tm1637.h" />
 		<Unit filename="ld/mg32f02a032_app.ld">
 			<Option target="app" />
+			<Option target="clock" />
+			<Option target="slave" />
 		</Unit>
 		<Unit filename="ld/mg32f02a032_svr.ld">
 			<Option target="svr" />
@@ -116,16 +160,21 @@
 		<Unit filename="src/app.c">
 			<Option compilerVar="CC" />
 			<Option target="app" />
+			<Option target="clock" />
+			<Option target="slave" />
+		</Unit>
+		<Unit filename="src/app_clock.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/app_slave.c">
+			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src/cmp.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src/cmp.h" />
 		<Unit filename="src/core.h" />
-		<Unit filename="src/ds3231.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/ds3231.h" />
+		<Unit filename="src/hwcf.h" />
 		<Unit filename="src/i2c.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -166,10 +215,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src/timer.h" />
-		<Unit filename="src/tm1637.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="src/tm1637.h" />
 		<Unit filename="src/uart.c">
 			<Option compilerVar="CC" />
 		</Unit>

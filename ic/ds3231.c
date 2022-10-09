@@ -71,3 +71,37 @@ void ds3231_write_multi(uint8_t first_reg, uint8_t len, uint32_t vals) {
   i2c_master_send(DS3231_PORT, (len & 0x07) | I2C_STOP, vals); TMOUT_CHECK
   i2c_wait_stop(DS3231_PORT); TMOUT_CHECK
 }
+
+
+#ifdef DS3231_ONEBYTE_MODE
+// Установка времени отдельными командами
+void clock_set_bcd(uint32_t t) {
+  ds3231_write(REG_SEC, t);
+  ds3231_write(REG_MIN, t >> 8);
+  ds3231_write(REG_HOUR,t >> 16);
+}
+
+#else
+// Установка времени в режиме multi-byte
+void clock_set_bcd(uint32_t t) {
+  ds3231_write_multi(REG_SEC,3,t);
+}
+#endif
+
+#ifdef DS3231_ONEBYTE_MODE
+// Считывание времени отдельными командами
+uint32_t clock_get_bcd() {
+  uint8_t d[4];
+  d[0]=ds3231_read(REG_SEC);
+  d[1]=ds3231_read(REG_MIN);
+  d[2]=ds3231_read(REG_HOUR);
+  d[3]=0;
+  return *(uint32_t*)d;
+}
+
+#else
+// Считывание времени в режиме multi-byte
+uint32_t clock_get_bcd() {
+  return ds3231_read_multi(REG_SEC,3);
+}
+#endif

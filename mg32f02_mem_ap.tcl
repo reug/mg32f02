@@ -1,7 +1,7 @@
 # OpenOCD/Tcl Library for Megawin MG32F02 chips
 # (C) 2022, reug@mail.ru
 
-set VERSION "2.2.2"
+set VERSION "2.2.3"
 
 set MEM_STA     0x4D000000
 set MEM_INT     0x4D000004
@@ -253,7 +253,8 @@ proc mem_ap_flash {fname addr {size 0}} {
       mem_ap_setwrite_single
       poll off
       write_memory $a 32 0xffffffff
-      after 5
+      # Delay for erase operation: 10 for A064/128, 20 for A032 (page 2 times larger).
+      after 20
       poll on
       #mem_ap_wait
     }] {

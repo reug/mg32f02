@@ -19,7 +19,12 @@ uint32_t i2c_status[16];
 
 void i2c_init(uint32_t id) {
   RH(CSC_KEY_h0) = 0xA217; // unlock access to CSC regs
+#ifdef  MG32F02A032
+  RB(CSC_APB0_b1) |= CSC_APB0_I2C0_EN_enable_b1;
+#endif
+#ifdef  MG32F02A128
   RB(CSC_APB0_b1) |= (id & 0x00010000) ? CSC_APB0_I2C1_EN_enable_b1 : CSC_APB0_I2C0_EN_enable_b1;
+#endif
   RH(CSC_KEY_h0) = 0; // lock access to CSC regs
 }
 

@@ -8,9 +8,13 @@
 #include "i2c.h"
 
 // Custom configuration:
+#ifndef DS3231_PORT
 #define DS3231_PORT   I2C0_id   // I2C module base address
+#endif
 
+#ifndef DS3231_ADDR
 #define DS3231_ADDR   0xD0      // 0b1101000X, X - direction: 0 - write, 1 - read.
+#endif
 
 
 // Registers:
@@ -29,6 +33,7 @@ enum DS3231_Registers {
   REG_TEMPL	  = 0x12
 };
 
+// Low level DS3231 access
 
 /// Read register
 uint8_t ds3231_read(uint8_t reg);
@@ -41,5 +46,15 @@ void ds3231_write(uint8_t reg, uint8_t val);
 
 /// Write several registers in multi-byte mode (max len 4)
 void ds3231_write_multi(uint8_t first_reg, uint8_t len, uint32_t vals);
+
+
+// High level DS3231 access
+
+/// Установка времени в формате BCD: 0xHHMMSS
+void clock_set_bcd(uint32_t t);
+
+/// Считывание времени в формате BCD: 0xHHMMSS
+uint32_t clock_get_bcd();
+
 
 #endif // DS3231_H

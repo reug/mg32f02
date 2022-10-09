@@ -1,7 +1,7 @@
 #include "init.h"
-#include "MG32x02z__RegAddress.h"
-#include "MG32x02z_CSC.h"
 #include "core.h"
+#include "MG32x02z_CSC.h"
+
 
 
 void init_clock() {
