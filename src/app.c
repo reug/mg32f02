@@ -2,6 +2,7 @@
 // by reug@mail.ru, 2022
 
 #include "core.h"
+#include "hwcf.h"
 #include "ulib.h"
 #include "utils.h"
 #include "init.h"

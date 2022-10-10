@@ -6,7 +6,8 @@
 #include "uart.h"
 #include "adc.h"
 #include "cmp.h"
-#include "MG32x02z__RegAddress.h"
+#include "core.h"
+#include "hwcf.h"
 
 /// Номер модуля URTx
 #define PORT 0
@@ -30,5 +31,16 @@ void led2_flash();
 /// Переключение двух светодиодов по 250 мс
 void led_blink();
 
+inline
+void led1_on() {RH(HW_LED1_SCH0) = HW_LED1_MASK;}
+
+inline
+void led1_off() {RH(HW_LED1_SCH1) = HW_LED1_MASK;}
+
+inline
+void led2_on() {RH(HW_LED2_SCH0) = HW_LED2_MASK;}
+
+inline
+void led2_off() {RH(HW_LED2_SCH1) = HW_LED2_MASK;}
 
 #endif //  UTILS_H

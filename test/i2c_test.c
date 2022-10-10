@@ -36,7 +36,7 @@ void i2c_test_master() {
   );
 
   while (1) {
-    d=clock_get_bcd();
+    d=ds3231_read_multi(3,3); //d=clock_get_bcd();
     if (i2c_get_tmout(DS3231_PORT)) {
       d=i2c_get_status(DS3231_PORT);
       debug32hex('S',d); i2c_print_status(d);
@@ -46,7 +46,7 @@ void i2c_test_master() {
     else {
       debug32hex('T',d);
     }
-    delay_ms(500);
+    delay_ms(1000);
   }
 
   //debug('c',ds3231_read(REG_CTRL));  debug('s',ds3231_read(REG_STATUS));

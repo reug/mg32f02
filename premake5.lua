@@ -70,8 +70,8 @@ workspace "Megawin"
 project "svr"
   kind "ConsoleApp"
   language "C"
-  defines {"HWCF_A032"}
-  --defines {"HWCF_A064"}
+  --defines {"HWCF_A032"}
+  defines {"HWCF_A064"}
   files {"src/init.c", "src/startup.c", "src/main.c", "src/svr.c", "src/ulib.c"}
   linkoptions {"-nostdlib"}
   linkoptions { "-Wl,--gc-sections"}
@@ -110,7 +110,7 @@ project "slave"
   language "C"
   defines {"HWCF_A032"}
   defines {"I2C_DEBUG"}
-  files {"src/app_slave.c", "src/utils.c", "src/uart.c", "test/i2c_test.c", "src/init.c", "src/ulib.c", MID_SRC.."MG32x02z_GPL_MID.c", "ic/ds3231.c", "src/i2c.c"}
+  files {"src/app_slave.c", "src/utils.c", "src/uart.c", "src/init.c", "src/ulib.c", MID_SRC.."MG32x02z_GPL_MID.c", "ic/ds3231.c", "src/i2c.c"}
   linkoptions {"-nostdlib"}
   linkoptions { "-Wl,--gc-sections"}
   linkoptions {"-T mg32f02a032_app.ld"}

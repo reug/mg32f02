@@ -2,6 +2,7 @@
 #include "ulib.h"
 #include "uart.h"
 #include "core.h"
+#include "hwcf.h"
 
 
 void debug(char label, uint16_t d) {
@@ -27,24 +28,24 @@ void debug32hex(char label, uint32_t d) {
 }
 
 void led1_flash() {
-  *(volatile uint16_t*)PB_SC_h0 = (1 << 13); // set bit 13
+  RH(HW_LED1_SCH0) = HW_LED1_MASK;
   delay_ms(100);
-  *(volatile uint16_t*)PB_SC_h1 = (1 << 13); // clear bit 13
-  delay_ms(100);
+  RH(HW_LED1_SCH1) = HW_LED1_MASK;
+  //delay_ms(100);
 }
 
 void led2_flash() {
-  *(volatile uint16_t*)PB_SC_h0 = (1 << 14); // set bit 14
+  RH(HW_LED2_SCH0) = HW_LED2_MASK;
   delay_ms(100);
-  *(volatile uint16_t*)PB_SC_h1 = (1 << 14); // clear bit 14
-  delay_ms(100);
+  RH(HW_LED2_SCH1) = HW_LED2_MASK;
+  //delay_ms(100);
 }
 
 void led_blink() {
-  RH(PB_SC_h1) = (1 << 14); // clear bit 14
-  RH(PB_SC_h0) = (1 << 13); // set bit 13
+  RH(HW_LED2_SCH1) = HW_LED2_MASK;
+  RH(HW_LED1_SCH0) = HW_LED1_MASK;
   delay_ms(250);
-  RH(PB_SC_h1) = (1 << 13); // clear bit 13
-  RH(PB_SC_h0) = (1 << 14); // set bit 14
+  RH(HW_LED1_SCH1) = HW_LED1_MASK;
+  RH(HW_LED2_SCH0) = HW_LED2_MASK;
   delay_ms(250);
 }
