@@ -114,7 +114,7 @@ void i2c_hdl() {
   if (d & I2C_STA_RSTRF_mask_w) ss.st=2;
   if (d & I2C_STA_STOPF_mask_w) {
       ss.st=0;
-    //i2c_slave_ans(I2C_PORT,2); // готовимся принять 1 байт - адрес регистра
+    i2c_slave_ans(I2C_PORT,2); // готовимся принять 1 байт - адрес регистра
   }
 
   if (d & I2C_STA_SADRF_mask_w) {
@@ -131,10 +131,10 @@ void i2c_hdl() {
     }
   }
   if (d & I2C_STA_RXF_mask_w) {
-    //led2_on();
-    //if (RB(I2C0_CR2_b2) & 0x07) led2_on();
+    led2_on();
+    if (RB(I2C0_CR2_b2) & 0x07) led2_on();
     //if (i2c_slave_read(I2C_PORT,&ss.reg,1)) led2_on();
-    if (RW(I2C0_DAT_w) == 3) led2_on();
+    //if (RW(I2C0_DAT_w) == 3) led2_on();
     i2c_slave_write(I2C_PORT,buf,3); // копируем в буфер максимум байт (4)
     //debug32hex('R',RW(I2C0_DAT_w));
     led2_off();
