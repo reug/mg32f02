@@ -57,18 +57,6 @@ void i2c_test_master() {
 
 
 #define I2C_PORT I2C0_id
-#define BUFLEN 8
-
-/// Буфер данных слэйва
-uint8_t buf[BUFLEN];
-
-/// Состояние слэйва
-struct SlaveState {
-  uint8_t st;   // FSM state
-  uint8_t bn;   // номер отправленного байта
-  uint8_t reg;  // запрашиваемый регистр
-} ss;
-
 
 void i2c_slave_ack(uint32_t id) {
   RB(id+( I2C0_CR2_b0 -I2C0_Base)) =
@@ -104,54 +92,85 @@ void i2c_slave_write(uint32_t id, uint8_t* data, uint8_t len) {
   RW(id+( I2C0_DAT_w -I2C0_Base)) = *(uint32_t*)data;
 }
 
+#define BUFLEN 8
+
+/// Буфер данных слэйва
+uint8_t buf[BUFLEN];
+
+/// Состояние слэйва
+struct SlaveState {
+  uint8_t st;   // FSM state
+  uint8_t bn;   // номер отправленного байта
+  uint8_t reg;  // запрашиваемый регистр
+} ss;
+
+
 /// Обработчик прерывания I2C0
 void i2c_hdl() {
+  uint32_t n; // число байт на отправку
   uint32_t d;
   led1_on();
 
   d=i2c_get_status(I2C_PORT);
 
-  if (d & I2C_STA_RSTRF_mask_w) ss.st=2;
-  if (d & I2C_STA_STOPF_mask_w) {
-      ss.st=0;
-    i2c_slave_ans(I2C_PORT,2); // готовимся принять 1 байт - адрес регистра
-  }
-
   if (d & I2C_STA_SADRF_mask_w) {
     if (d & I2C_STA_RWF_read_w) { // Master reads
-      ss.st=2;
+      ss.st=3;
+      //led2_on();
       //i2c_slave_write(I2C_PORT,buf,4); // копируем в буфер максимум байт (4)
       //uart_puts(PORT,"R",UART_NEWLINE_LFCR);
     }
     else { // Master writes
       ss.st=1;
-      i2c_slave_ans(I2C_PORT,1); // готовимся принять 1 байт - адрес регистра
+      //RB(I2C0_CR2_b1) =0;
+      //if ((RB(I2C0_CR2_b1) & 0x07) ==0) led2_on(); // проверка что сброс BUF_CNT работает - РАБОТАЕТ.
+      //i2c_slave_ans(I2C_PORT,1); // готовимся принять 1 байт - адрес регистра
       //uart_puts(PORT,"W",UART_NEWLINE_LFCR);
       //led2_on(); __NOP(); led2_off();
     }
   }
-  if (d & I2C_STA_RXF_mask_w) {
-    led2_on();
-    if (RB(I2C0_CR2_b2) & 0x07) led2_on();
-    //if (i2c_slave_read(I2C_PORT,&ss.reg,1)) led2_on();
-    //if (RW(I2C0_DAT_w) == 3) led2_on();
-    i2c_slave_write(I2C_PORT,buf,3); // копируем в буфер максимум байт (4)
-    //debug32hex('R',RW(I2C0_DAT_w));
-    led2_off();
+  if (d & I2C_STA_STOPF_mask_w) {
+      ss.st=0;
+    //i2c_slave_ans(I2C_PORT,2); // готовимся принять 1 байт - адрес регистра
+  }
+  if (d & I2C_STA_RSTRF_mask_w) {
+      //if (ss.st==1) i2c_slave_write(I2C_PORT,buf,3); // Подготавливаем данные для отправки (копируем в буфер максимум байт (4))
   }
 
-  //debug('T',ss.st);
+  if (d & I2C_STA_TXF_mask_w) {
+    led2_on();
+  }
+  if (d & I2C_STA_RXF_mask_w) {
+    ss.st=2;
+    //led2_on();
+    //if (RB(I2C0_CR2_b2) & 0x07) led2_on(); // ACNT check
+    //n=; // BUF_CNT
+    //if (RB(I2C0_CR2_b1) & 0x07 ==1) led2_on(); // BUF_CNT check
+
+    //if (i2c_slave_read(I2C_PORT,&ss.reg,1)) led2_on();
+    n=RW(I2C0_DAT_w);
+    //if ( n== 3) led2_on();
+    i2c_slave_write(I2C_PORT,buf,n); // Подготавливаем данные для отправки (копируем в буфер максимум байт (4))
+    //debug32hex('R',RW(I2C0_DAT_w));
+
+  }
+
+  //if (d & I2C_STA_CNTF_happened_w) {led2_on(); led2_off();} // не срабатывает
+
+
+  led1_off(); led2_off();
   //i2c_clr_status(I2C_PORT, I2C_STA_BUFF_mask_w);
   //i2c_clr_status(I2C_PORT, d);
   i2c_clr_status(I2C_PORT, 0x00ffffff);
-  led1_off();
 }
 
 /// Общая настройка режима слэйва
 void i2c_test_slave() {
-//  uint32_t d;
+  uint32_t i;
+
   ss.st=0; ss.bn=0; ss.reg=0x55;
-  buf[0] = 0x12; buf[1] = 0x34; buf[2] = 0x56;
+  for (i=0; i< BUFLEN; i++) buf[i]=((i+1)<< 4) | (i+1);
+
   i2c_init(I2C_PORT);
   // Настройка выводов I2C:
   HW_I2C0_SETSCL;  HW_I2C0_SETSDA;
