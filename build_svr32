@@ -1,0 +1,2 @@
+premake5 gmake
+make svr32 verbose=1

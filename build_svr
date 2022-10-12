@@ -1,2 +1,0 @@
-premake5 gmake
-make svr verbose=1

@@ -85,7 +85,9 @@ void app() {
   //timer_test_freq();
   //timer_test_capture();
   //timer_test_pwm();
-  i2c_test_master();
+  i2c_test_master_setup();
+  //i2c_test_master_w1r3();
+  i2c_test_master_wN(4);
   //tm1637_test();
 
 /*

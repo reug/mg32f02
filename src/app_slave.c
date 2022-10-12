@@ -106,62 +106,85 @@ struct SlaveState {
 
 
 /// Обработчик прерывания I2C0
-void i2c_hdl() {
+void i2c_hdl_w1rN() {
   uint32_t n; // число байт на отправку
   uint32_t d;
-  led1_on();
 
+  led1_on();
   d=i2c_get_status(I2C_PORT);
 
   if (d & I2C_STA_SADRF_mask_w) {
     if (d & I2C_STA_RWF_read_w) { // Master reads
-      ss.st=3;
       //led2_on();
-      //i2c_slave_write(I2C_PORT,buf,4); // копируем в буфер максимум байт (4)
-      //uart_puts(PORT,"R",UART_NEWLINE_LFCR);
     }
     else { // Master writes
-      ss.st=1;
-      //RB(I2C0_CR2_b1) =0;
-      //if ((RB(I2C0_CR2_b1) & 0x07) ==0) led2_on(); // проверка что сброс BUF_CNT работает - РАБОТАЕТ.
-      //i2c_slave_ans(I2C_PORT,1); // готовимся принять 1 байт - адрес регистра
-      //uart_puts(PORT,"W",UART_NEWLINE_LFCR);
-      //led2_on(); __NOP(); led2_off();
+      //led2_on();
     }
   }
   if (d & I2C_STA_STOPF_mask_w) {
-      ss.st=0;
-    //i2c_slave_ans(I2C_PORT,2); // готовимся принять 1 байт - адрес регистра
+    //led2_on();
   }
   if (d & I2C_STA_RSTRF_mask_w) {
-      //if (ss.st==1) i2c_slave_write(I2C_PORT,buf,3); // Подготавливаем данные для отправки (копируем в буфер максимум байт (4))
+    //led2_on();
   }
-
   if (d & I2C_STA_TXF_mask_w) {
-    led2_on();
+    //led2_on();
   }
   if (d & I2C_STA_RXF_mask_w) {
-    ss.st=2;
     //led2_on();
     //if (RB(I2C0_CR2_b2) & 0x07) led2_on(); // ACNT check
-    //n=; // BUF_CNT
     //if (RB(I2C0_CR2_b1) & 0x07 ==1) led2_on(); // BUF_CNT check
-
     //if (i2c_slave_read(I2C_PORT,&ss.reg,1)) led2_on();
     n=RW(I2C0_DAT_w);
     //if ( n== 3) led2_on();
     i2c_slave_write(I2C_PORT,buf,n); // Подготавливаем данные для отправки (копируем в буфер максимум байт (4))
-    //debug32hex('R',RW(I2C0_DAT_w));
-
   }
-
-  //if (d & I2C_STA_CNTF_happened_w) {led2_on(); led2_off();} // не срабатывает
-
-
   led1_off(); led2_off();
   //i2c_clr_status(I2C_PORT, I2C_STA_BUFF_mask_w);
   //i2c_clr_status(I2C_PORT, d);
   i2c_clr_status(I2C_PORT, 0x00ffffff);
+}
+
+
+/// Обработчик прерывания I2C0
+void i2c_hdl_wN() {
+  uint32_t n; // число байт на отправку
+  uint32_t d;
+
+  led1_on();
+  d=i2c_get_status(I2C_PORT);
+
+  if (d & I2C_STA_SADRF_mask_w) {
+    if (d & I2C_STA_RWF_read_w) { // Master reads
+      //led2_on();
+    }
+    else { // Master writes
+      //led2_on();
+    }
+  }
+  if (d & I2C_STA_STOPF_mask_w) {
+    //led2_on();
+  }
+  if (d & I2C_STA_RSTRF_mask_w) {
+    //led2_on();
+  }
+  if (d & I2C_STA_TXF_mask_w) {
+    //led2_on();
+  }
+  if (d & I2C_STA_RXF_mask_w) {
+    //led2_on();
+    //if (RB(I2C0_CR2_b2) & 0x07) led2_on(); // ACNT check - НЕ СРАБАТЫВАЕТ
+    //if ((RB(I2C0_CR2_b1) & 0x07) ==1) led2_on(); // BUF_CNT check - РАБОТАЕТ
+    //if (i2c_slave_read(I2C_PORT,&ss.reg,1)) led2_on();
+    n=RW(I2C0_DAT_w);
+    //if ( n== 3) led2_on();
+    //i2c_slave_write(I2C_PORT,buf,n); // Подготавливаем данные для отправки (копируем в буфер максимум байт (4))
+  }
+  led1_off(); led2_off();
+  //i2c_clr_status(I2C_PORT, I2C_STA_BUFF_mask_w);
+  //i2c_clr_status(I2C_PORT, d);
+  //i2c_clr_status(I2C_PORT, 0x00ffffff);
+  i2c_clr_status(I2C_PORT, ~I2C_STA_EVENTF_mask_w);
 }
 
 /// Общая настройка режима слэйва
@@ -196,13 +219,20 @@ void i2c_test_slave() {
   RB(I2C0_CR0_b1) |= I2C_CR0_SCLS_DIS_disable_b1;
 
   // Устанавливаем обработчик прерываний:
-  SVC2(SVC_HANDLER_SET,28,i2c_hdl);
+  SVC2(SVC_HANDLER_SET,28,i2c_hdl_wN);
   // Включаем прерывания в модуле:
   RW(I2C0_INT_w) =
     I2C_INT_BUF_IE_enable_w | // flags: RXF, TXF, RSTRF, STOPF, SADRF
     I2C_INT_IEA_enable_w;
   // Включаем прерывание в модуле NVIC:
   RW(CPU_ISER_w) = (1 << 28); // SETENA 28
+
+  while (1) {
+    // Проверка ACNT:
+    //if (RB(I2C0_CR2_b2) & 0x07) led2_on();
+    // Проверка CNTF:
+    if (RW(I2C0_STA_w) & I2C_STA_EVENTF_mask_w) {led2_on(); __NOP(); led2_off();}
+  }
 
 }
 

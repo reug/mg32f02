@@ -1,0 +1,2 @@
+premake5 gmake
+make svr64 verbose=1

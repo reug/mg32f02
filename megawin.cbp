@@ -7,50 +7,10 @@
 		<Option pch_mode="2" />
 		<Option compiler="arm-elf-gcc" />
 		<Build>
-			<Target title="default">
+			<Target title="premake">
 				<Option output="default/image.elf" prefix_auto="0" extension_auto="0" />
 				<Option object_output="default" />
 				<Option type="1" />
-				<Option compiler="arm-elf-gcc" />
-				<ExtraCommands>
-					<Add after="$(TP)objcopy -O binary $(TARGET_OUTPUT_FILE) $(TARGET_OUTPUT_BASENAME).bin" />
-					<Add after="$(TP)objdump -Mforce-thumb -d -S -G $(TARGET_OUTPUT_FILE) &gt; $(TARGET_OUTPUT_BASENAME).lst" />
-					<Add after="$(TP)size $(TARGET_OUTPUT_FILE)" />
-				</ExtraCommands>
-			</Target>
-			<Target title="svr">
-				<Option output="megawin" prefix_auto="1" extension_auto="1" />
-				<Option type="0" />
-				<Option compiler="arm-elf-gcc" />
-				<MakeCommands>
-					<Build command="./build_svr" />
-					<CompileFile command="make -f svr.make $file" />
-					<Clean command="make -f svr.make clean" />
-					<DistClean command="$make -f $makefile distclean$target" />
-					<AskRebuildNeeded command="make -q -f svr.make" />
-					<SilentBuild command="./build_svr &gt; $(CMD_NULL)" />
-				</MakeCommands>
-			</Target>
-			<Target title="app">
-				<Option output="megawin" prefix_auto="1" extension_auto="1" />
-				<Option type="1" />
-				<Option compiler="arm-elf-gcc" />
-				<Option use_console_runner="0" />
-				<ExtraCommands>
-					<Add after="./run_app" />
-				</ExtraCommands>
-				<MakeCommands>
-					<Build command="./build_app" />
-					<CompileFile command="make -f app.make $file" />
-					<Clean command="make -f app.make clean" />
-					<DistClean command="$make -f $makefile distclean$target" />
-					<AskRebuildNeeded command="make -q -f app.make" />
-					<SilentBuild command="./build_app &gt; $(CMD_NULL)" />
-				</MakeCommands>
-			</Target>
-			<Target title="premake">
-				<Option output="megawin" prefix_auto="1" extension_auto="1" />
-				<Option type="0" />
 				<Option compiler="arm-elf-gcc" />
 				<MakeCommands>
 					<Build command="premake5 gmake" />
@@ -59,6 +19,49 @@
 					<DistClean command="$make -f $makefile distclean$target" />
 					<AskRebuildNeeded command="" />
 					<SilentBuild command="premake5 gmake &gt; $(CMD_NULL)" />
+				</MakeCommands>
+			</Target>
+			<Target title="svr32">
+				<Option output="default/image.elf" prefix_auto="0" extension_auto="0" />
+				<Option object_output="default" />
+				<Option type="1" />
+				<Option compiler="arm-elf-gcc" />
+				<MakeCommands>
+					<Build command="make svr32" />
+					<CompileFile command="make -f svr32.make $file" />
+					<Clean command="make -f svr32.make clean" />
+					<DistClean command="$make -f $makefile distclean$target" />
+					<AskRebuildNeeded command="make -q -f svr32.make" />
+					<SilentBuild command="make svr32 &gt; $(CMD_NULL)" />
+				</MakeCommands>
+			</Target>
+			<Target title="svr64">
+				<Option output="megawin" prefix_auto="1" extension_auto="1" />
+				<Option type="0" />
+				<Option compiler="arm-elf-gcc" />
+				<MakeCommands>
+					<Build command="make svr64" />
+					<CompileFile command="make -f svr64.make $file" />
+					<Clean command="make -f svr64.make clean" />
+					<DistClean command="$make -f $makefile distclean$target" />
+					<AskRebuildNeeded command="make -q -f svr64.make" />
+					<SilentBuild command="make svr64 &gt; $(CMD_NULL)" />
+				</MakeCommands>
+			</Target>
+			<Target title="app">
+				<Option output="megawin" prefix_auto="1" extension_auto="1" />
+				<Option type="0" />
+				<Option compiler="arm-elf-gcc" />
+				<ExtraCommands>
+					<Add after="./run_app" />
+				</ExtraCommands>
+				<MakeCommands>
+					<Build command="make app" />
+					<CompileFile command="make -f app.make $file" />
+					<Clean command="make -f app.make clean" />
+					<DistClean command="$make -f $makefile distclean$target" />
+					<AskRebuildNeeded command="make -q -f app.make" />
+					<SilentBuild command="make app &gt; $(CMD_NULL)" />
 				</MakeCommands>
 			</Target>
 			<Target title="clock">
@@ -137,17 +140,17 @@
 		</Unit>
 		<Unit filename="ic/tm1637.h" />
 		<Unit filename="ld/mg32f02a032_app.ld">
-			<Option target="app" />
 			<Option target="clock" />
 			<Option target="slave" />
 		</Unit>
 		<Unit filename="ld/mg32f02a032_svr.ld">
-			<Option target="svr" />
+			<Option target="svr64" />
 		</Unit>
 		<Unit filename="ld/mg32f02a064_app.ld" />
 		<Unit filename="ld/mg32f02a064_svr.ld" />
 		<Unit filename="premake5.lua">
-			<Option target="default" />
+			<Option target="svr32" />
+			<Option target="premake" />
 		</Unit>
 		<Unit filename="src/adc.c">
 			<Option compilerVar="CPP" />
@@ -159,7 +162,6 @@
 		<Unit filename="src/api.h" />
 		<Unit filename="src/app.c">
 			<Option compilerVar="CC" />
-			<Option target="app" />
 			<Option target="clock" />
 			<Option target="slave" />
 		</Unit>
@@ -181,14 +183,17 @@
 		<Unit filename="src/i2c.h" />
 		<Unit filename="src/init.c">
 			<Option compilerVar="CC" />
-			<Option target="default" />
+			<Option target="svr32" />
+			<Option target="premake" />
 		</Unit>
 		<Unit filename="src/init.h">
-			<Option target="default" />
+			<Option target="svr32" />
+			<Option target="premake" />
 		</Unit>
 		<Unit filename="src/main.c">
 			<Option compilerVar="CC" />
-			<Option target="default" />
+			<Option target="svr32" />
+			<Option target="premake" />
 		</Unit>
 		<Unit filename="src/nco.c">
 			<Option compilerVar="CC" />
@@ -200,16 +205,17 @@
 		<Unit filename="src/rtc.h" />
 		<Unit filename="src/startup.c">
 			<Option compilerVar="CC" />
-			<Option target="default" />
+			<Option target="svr32" />
+			<Option target="premake" />
 		</Unit>
 		<Unit filename="src/svr.c">
 			<Option compilerVar="CC" />
-			<Option target="svr" />
-			<Option target="premake" />
+			<Option target="svr64" />
+			<Option target="app" />
 		</Unit>
 		<Unit filename="src/svr.h">
-			<Option target="svr" />
-			<Option target="premake" />
+			<Option target="svr64" />
+			<Option target="app" />
 		</Unit>
 		<Unit filename="src/timer.c">
 			<Option compilerVar="CC" />

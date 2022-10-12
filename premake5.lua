@@ -5,14 +5,8 @@
 -- Сборка с выводом командных строк:
 --   make <цель> verbose=1
 
-workspace "Megawin"
-
--- MCPU name:
-  MCPU = "cortex-m0"
-
--- Chip name:
-  CHIP = "MG32F02A032"
-  --CHIP = "MG32F02A128"
+-- Chips: "MG32F02A032" или "MG32F02A128"
+function setup_paths(CHIP)
 
 -- Device Family Pack path:
   DFP_PATH =  "/opt/arm/megawin/DFP/Device/MG32x02z/"
@@ -31,6 +25,20 @@ workspace "Megawin"
   MID_INC =   MID_PATH.."Include"
   MID_SRC =   MID_PATH.."Source/"
 
+  defines {CHIP}
+
+  includedirs {DFP_INC, DRV_INC, MID_INC}
+
+end
+
+workspace "Megawin"
+
+-- MCPU name:
+  MCPU = "cortex-m0"
+
+  configurations {"Debug"}
+  symbols "On"
+
 -- CMSIS paths:
   CMSIS_PATH = "/opt/arm/CMSIS/"
   CMSIS_INC = {CMSIS_PATH.."CMSIS/Core/Include"}
@@ -41,10 +49,7 @@ workspace "Megawin"
 -- GCC toolchain prefix
   GCCPREFIX = "/opt/gcc-arm/bin/arm-none-eabi-"
 
-  configurations {"Debug"}
-  gccprefix (GCCPREFIX)
-  defines {CHIP}
-  includedirs {".", "src"}
+  includedirs {".", "src", CMSIS_INC}
   buildoptions {"-mthumb", "-mcpu="..MCPU, "-Wall", "-O3", "-g", "-fno-common",
     "-ffunction-sections", "-fdata-sections", "-ffreestanding"}
     --"-ffunction-sections", "-fdata-sections", "-ffreestanding", "-flto"}
@@ -63,24 +68,33 @@ workspace "Megawin"
     GCCPREFIX.."size %{cfg.buildtarget.relpath}"
   }
 
-  includedirs {DFP_INC, DRV_INC, MID_INC, CMSIS_INC}
+  gccprefix (GCCPREFIX)
 
-  symbols "On"
 
-project "svr"
+project "svr32"
   kind "ConsoleApp"
   language "C"
-  --defines {"HWCF_A032"}
-  defines {"HWCF_A064"}
+  setup_paths ("MG32F02A032")
+  defines {"HWCF_A032"}
   files {"src/init.c", "src/startup.c", "src/main.c", "src/svr.c", "src/ulib.c"}
   linkoptions {"-nostdlib"}
   linkoptions { "-Wl,--gc-sections"}
   linkoptions {"-T mg32f02a032_svr.ld"}
-  --linkoptions {"-T mg32f02a064_svr.ld"}
+
+project "svr64"
+  kind "ConsoleApp"
+  language "C"
+  setup_paths ("MG32F02A128")
+  defines {"HWCF_A064"}
+  files {"src/init.c", "src/startup.c", "src/main.c", "src/svr.c", "src/ulib.c"}
+  linkoptions {"-nostdlib"}
+  linkoptions { "-Wl,--gc-sections"}
+  linkoptions {"-T mg32f02a064_svr.ld"}
 
 project "app"
   kind "ConsoleApp"
   language "C"
+  setup_paths ("MG32F02A128")
   defines {"HWCF_A064"}
   defines {"I2C_DEBUG"}
   --files {"src/app.c", "src/utils.c", "test/adc_test.c", "src/uart.c", "src/adc.c", "src/cmp.c", "src/init.c", "src/ulib.c"}
@@ -98,6 +112,7 @@ project "app"
 project "clock"
   kind "ConsoleApp"
   language "C"
+  setup_paths ("MG32F02A128")
   defines {"HWCF_A064"}
   defines {"I2C_DEBUG"}
   files {"src/app_clock.c", "src/utils.c", "src/uart.c", "test/i2c_test.c", "src/init.c", "src/ulib.c", MID_SRC.."MG32x02z_GPL_MID.c", "ic/tm1637.c", "ic/ds3231.c", "src/i2c.c"}
@@ -108,6 +123,7 @@ project "clock"
 project "slave"
   kind "ConsoleApp"
   language "C"
+  setup_paths ("MG32F02A032")
   defines {"HWCF_A032"}
   defines {"I2C_DEBUG"}
   files {"src/app_slave.c", "src/utils.c", "src/uart.c", "src/init.c", "src/ulib.c", MID_SRC.."MG32x02z_GPL_MID.c", "ic/ds3231.c", "src/i2c.c"}
