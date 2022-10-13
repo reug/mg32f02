@@ -112,6 +112,11 @@ char* strUint8hex(char* str, uint16_t num) {
 */
 
 
+char hexdigit(uint8_t d) {
+  return d + (d < 10 ? 48 : 55);
+}
+
+
 char* strUint16(char* str, uint8_t width, uint16_t num) {
   str[width]=0;
   uint8_t i=width;

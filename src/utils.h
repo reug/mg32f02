@@ -22,6 +22,8 @@ void debug32(char label, uint32_t d);
 /// Вывод 32-битного числа в URT<PORT> в hex
 void debug32hex(char label, uint32_t d);
 
+void debugbuf(uint8_t* buf, uint32_t len);
+
 /// Включение светодиода D1 на 100 мс
 void led1_flash();
 

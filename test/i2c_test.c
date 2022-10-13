@@ -31,11 +31,11 @@ void i2c_test_master_setup() {
 }
 
 
-void i2c_test_master_w1r3() {
+void i2c_test_master_w1r() {
   uint32_t d;
 
   while (1) {
-    d=ds3231_read_multi(3,3); //d=clock_get_bcd();
+    d=ds3231_read_multi(6,6); //d=clock_get_bcd();
     if (i2c_get_tmout(DS3231_PORT)) {
       d=i2c_get_status(DS3231_PORT);
       debug32hex('S',d); i2c_print_status(d);

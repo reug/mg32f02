@@ -27,6 +27,16 @@ void debug32hex(char label, uint32_t d) {
   uart_puts(PORT, s, UART_NEWLINE_CRLF);
 }
 
+void debugbuf(uint8_t* buf, uint32_t len) {
+  uint32_t i;
+  for (i=0; i<len; i++) {
+    uart_tx(PORT,hexdigit(buf[i] >> 4));
+    uart_tx(PORT,hexdigit(buf[i] & 0x0F));
+    uart_tx(PORT,' ');
+  }
+  uart_puts(PORT, "", UART_NEWLINE_CRLF);
+}
+
 void led1_flash() {
   RH(HW_LED1_SCH0) = HW_LED1_MASK;
   delay_ms(100);

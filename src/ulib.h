@@ -22,6 +22,9 @@ uint32_t bcd16(uint32_t b);
 #define DELAY_KMS   2260
 #define delay_ms(x) delay((x)*DELAY_KMS)
 
+/// Возвращает hex-цифру.
+char hexdigit(uint8_t d);
+
 ///// String (dec) from unsigned 8-bit integer with zero padding
 //char* strUint8(char* str, uint8_t width, uint8_t num);
 

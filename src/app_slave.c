@@ -57,7 +57,7 @@ void i2c_test_master() {
 
 
 #define I2C_PORT I2C0_id
-
+/*
 void i2c_slave_ack(uint32_t id) {
   RB(id+( I2C0_CR2_b0 -I2C0_Base)) =
     (I2C_CR2_AA_LCK_un_locked_b0 | I2C_CR2_AA_mask_b0);
@@ -84,31 +84,73 @@ uint8_t i2c_slave_read(uint32_t id, uint8_t* buf, uint8_t len) {
   }
   return n;
 }
+*/
+
+/// Запись данных в буфер отправки
+inline
+void i2c_write(uint32_t id, uint32_t data, uint8_t len) {
+  RB(id+( I2C0_CR2_b1 -I2C0_Base)) = (len & I2C_CR2_BUF_CNT_mask_b1); // BUF_CNT
+  RW(id+( I2C0_DAT_w -I2C0_Base)) = data;
+}
+
 
 /// Запись данных в буфер.
-void i2c_slave_write(uint32_t id, uint8_t* data, uint8_t len) {
-  //RW(id+( I2C0_STA_w -I2C0_Base)) |= I2C_STA_TXF_mask_w; // сбрасываем TXF, иначе финальная проверка в конце функции может сработать сразу после старта
-  RW(id+( I2C0_CR2_w -I2C0_Base)) = (len & 0x07) << 8; // BUF_CNT
-  RW(id+( I2C0_DAT_w -I2C0_Base)) = *(uint32_t*)data;
+/// Возвращает оставшееся число байт.
+uint32_t i2c_writebuf(uint32_t id, void* buf, uint32_t* p, uint32_t len) {
+  uint8_t m;
+  int32_t n;
+  n = len - *p;
+  if (n > 0) {
+    m = n < 4 ? n : 4;
+    RB(id+( I2C0_CR2_b1 -I2C0_Base)) = (m & I2C_CR2_BUF_CNT_mask_b1); // BUF_CNT
+    RW(id+( I2C0_DAT_w -I2C0_Base)) = *(uint32_t*)((uint8_t*)buf + *p);
+    *p += m;
+  }
+  return len-*p;
 }
+
+
+/// Чтение буфера приема (4 байта)
+inline
+uint32_t i2c_read(uint32_t id) {
+  return RW(id+( I2C0_DAT_w -I2C0_Base));
+}
+
+
+/// Чтение принятых данных и их запись в указанный буфер.
+/// На входе: *p - текущее положение в буфере (указывает на следующий байт после записанного).
+/// На выходе: *p - новое значение, увеличенное на число считанных байт.
+/// Возвращает фактическое число считанных байт.
+uint8_t i2c_readbuf(uint32_t id, void* buf, uint32_t* p) {
+  uint8_t n = RB(id+( I2C0_CR2_b1 -I2C0_Base)) & I2C_CR2_BUF_CNT_mask_b1; // BUF_CNT
+  *(uint32_t*)((uint8_t*)buf + *p) = RW(id+( I2C0_DAT_w -I2C0_Base));
+  *p += n;
+  return n;
+}
+
+
 
 #define BUFLEN 8
 
 /// Буфер данных слэйва
-uint8_t buf[BUFLEN];
+uint8_t  buf[BUFLEN]; ///< данные буфера
+uint32_t bufp;        ///< указатель буфера
+uint32_t bufn;        ///< размер данных на отправку
 
+
+/*
 /// Состояние слэйва
 struct SlaveState {
   uint8_t st;   // FSM state
-  uint8_t bn;   // номер отправленного байта
+  uint8_t bn;   // номер отправленного или принятого байта
   uint8_t reg;  // запрашиваемый регистр
 } ss;
-
+*/
 
 /// Обработчик прерывания I2C0
 void i2c_hdl_w1rN() {
-  uint32_t n; // число байт на отправку
-  uint32_t d;
+  uint32_t d; // флаги
+  uint32_t n;
 
   led1_on();
   d=i2c_get_status(I2C_PORT);
@@ -119,25 +161,27 @@ void i2c_hdl_w1rN() {
     }
     else { // Master writes
       //led2_on();
+      bufp=0; bufn=0;
     }
+  }
+  if (d & I2C_STA_TXF_mask_w) {
+    if (bufp==bufn) led2_on();
+    if (bufn > bufp) i2c_writebuf(I2C_PORT,buf,&bufp,bufn);
+
+  }
+  if (d & I2C_STA_RXF_mask_w) {
+    n=i2c_read(I2C_PORT);
+    //if (n==6) led2_on();
+    bufn = (n <= BUFLEN) ? n : BUFLEN;
+    i2c_writebuf(I2C_PORT,buf,&bufp,bufn); // Подготавливаем данные для отправки (копируем в буфер максимум байт (4))
+    //led2_on();
+    //if (bufp==4) led2_on();
   }
   if (d & I2C_STA_STOPF_mask_w) {
     //led2_on();
   }
   if (d & I2C_STA_RSTRF_mask_w) {
     //led2_on();
-  }
-  if (d & I2C_STA_TXF_mask_w) {
-    //led2_on();
-  }
-  if (d & I2C_STA_RXF_mask_w) {
-    //led2_on();
-    //if (RB(I2C0_CR2_b2) & 0x07) led2_on(); // ACNT check
-    //if (RB(I2C0_CR2_b1) & 0x07 ==1) led2_on(); // BUF_CNT check
-    //if (i2c_slave_read(I2C_PORT,&ss.reg,1)) led2_on();
-    n=RW(I2C0_DAT_w);
-    //if ( n== 3) led2_on();
-    i2c_slave_write(I2C_PORT,buf,n); // Подготавливаем данные для отправки (копируем в буфер максимум байт (4))
   }
   led1_off(); led2_off();
   //i2c_clr_status(I2C_PORT, I2C_STA_BUFF_mask_w);
@@ -160,38 +204,37 @@ void i2c_hdl_wN() {
     }
     else { // Master writes
       //led2_on();
+      bufp=0;
     }
-  }
-  if (d & I2C_STA_STOPF_mask_w) {
-    //led2_on();
-  }
-  if (d & I2C_STA_RSTRF_mask_w) {
-    //led2_on();
   }
   if (d & I2C_STA_TXF_mask_w) {
     //led2_on();
   }
   if (d & I2C_STA_RXF_mask_w) {
+    n=i2c_readbuf(I2C_PORT,buf,&bufp);
+    if ( bufp== 5) led2_on();
     //led2_on();
-    //if (RB(I2C0_CR2_b2) & 0x07) led2_on(); // ACNT check - НЕ СРАБАТЫВАЕТ
-    //if ((RB(I2C0_CR2_b1) & 0x07) ==1) led2_on(); // BUF_CNT check - РАБОТАЕТ
-    //if (i2c_slave_read(I2C_PORT,&ss.reg,1)) led2_on();
-    n=RW(I2C0_DAT_w);
-    //if ( n== 3) led2_on();
-    //i2c_slave_write(I2C_PORT,buf,n); // Подготавливаем данные для отправки (копируем в буфер максимум байт (4))
+  }
+  if (d & I2C_STA_STOPF_mask_w) {
+    //led2_on();
+    debugbuf(buf,bufp);
+    //bufp=0;
+  }
+  if (d & I2C_STA_RSTRF_mask_w) {
+    //led2_on();
   }
   led1_off(); led2_off();
   //i2c_clr_status(I2C_PORT, I2C_STA_BUFF_mask_w);
   //i2c_clr_status(I2C_PORT, d);
-  //i2c_clr_status(I2C_PORT, 0x00ffffff);
-  i2c_clr_status(I2C_PORT, ~I2C_STA_EVENTF_mask_w);
+  i2c_clr_status(I2C_PORT, 0x00ffffff);
+  //i2c_clr_status(I2C_PORT, ~I2C_STA_EVENTF_mask_w);
 }
 
 /// Общая настройка режима слэйва
 void i2c_test_slave() {
   uint32_t i;
 
-  ss.st=0; ss.bn=0; ss.reg=0x55;
+  //ss.st=0; ss.bn=0; ss.reg=0x77;
   for (i=0; i< BUFLEN; i++) buf[i]=((i+1)<< 4) | (i+1);
 
   i2c_init(I2C_PORT);
@@ -219,7 +262,7 @@ void i2c_test_slave() {
   RB(I2C0_CR0_b1) |= I2C_CR0_SCLS_DIS_disable_b1;
 
   // Устанавливаем обработчик прерываний:
-  SVC2(SVC_HANDLER_SET,28,i2c_hdl_wN);
+  SVC2(SVC_HANDLER_SET,28,i2c_hdl_w1rN);
   // Включаем прерывания в модуле:
   RW(I2C0_INT_w) =
     I2C_INT_BUF_IE_enable_w | // flags: RXF, TXF, RSTRF, STOPF, SADRF
@@ -231,7 +274,7 @@ void i2c_test_slave() {
     // Проверка ACNT:
     //if (RB(I2C0_CR2_b2) & 0x07) led2_on();
     // Проверка CNTF:
-    if (RW(I2C0_STA_w) & I2C_STA_EVENTF_mask_w) {led2_on(); __NOP(); led2_off();}
+    //if (RW(I2C0_STA_w) & I2C_STA_EVENTF_mask_w) {led2_on(); __NOP(); led2_off();}
   }
 
 }
@@ -257,5 +300,5 @@ void app() {
   //i2c_test_master();
   i2c_test_slave();
 
-  while (1) ;//led_blink();
+  while (1) ;
 }
