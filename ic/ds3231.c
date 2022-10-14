@@ -14,21 +14,20 @@
 #define TMOUT_CHECK2    if (i2c_get_tmout(DS3231_PORT)) goto failure;
 
 
-
 uint8_t ds3231_read(uint8_t reg) {
   //int i;
   uint32_t d;
   //ds[0]=i2c_get_status(DS3231_PORT);
   i2c_master_startw(DS3231_PORT, DS3231_ADDR); TMOUT_CHECK2
   //ds[1]=i2c_get_status(DS3231_PORT);
-  i2c_master_send(DS3231_PORT, 1 | I2C_START, reg); TMOUT_CHECK2
+  i2c_master_send(DS3231_PORT, I2C_START, 1, reg); TMOUT_CHECK2
   //ds[2]=i2c_get_status(DS3231_PORT);
   i2c_wait_start(DS3231_PORT); TMOUT_CHECK2
   //ds[3]=i2c_get_status(DS3231_PORT);
 
   i2c_master_startr(DS3231_PORT, DS3231_ADDR); TMOUT_CHECK2
   //ds[4]=i2c_get_status(DS3231_PORT);
-  d=i2c_master_recv(DS3231_PORT, 1 | I2C_STOP); TMOUT_CHECK2
+  d=i2c_master_recv(DS3231_PORT, I2C_STOP, 1); TMOUT_CHECK2
   //ds[5]=i2c_get_status(DS3231_PORT);
   i2c_wait_stop(DS3231_PORT); TMOUT_CHECK2
   //ds[6]=i2c_get_status(DS3231_PORT);
@@ -47,10 +46,10 @@ failure:
 uint32_t ds3231_read_multi(uint8_t first_reg, uint8_t len) {
   uint32_t d;
   i2c_master_startw(DS3231_PORT, DS3231_ADDR); TMOUT_CHECK2
-  i2c_master_send(DS3231_PORT, 1 | I2C_START, first_reg); TMOUT_CHECK2
+  i2c_master_send(DS3231_PORT, I2C_START, 1, first_reg); TMOUT_CHECK2
   i2c_wait_start(DS3231_PORT); TMOUT_CHECK2
   i2c_master_startr(DS3231_PORT, DS3231_ADDR); TMOUT_CHECK2
-  d=i2c_master_recv(DS3231_PORT, (len & 0x07) | I2C_STOP); TMOUT_CHECK2
+  d=i2c_master_recv(DS3231_PORT, I2C_STOP, len & 0x07); TMOUT_CHECK2
   i2c_wait_stop(DS3231_PORT); TMOUT_CHECK2
   return d;
 failure:
@@ -60,15 +59,15 @@ failure:
 
 void ds3231_write(uint8_t reg, uint8_t val) {
   i2c_master_startw(DS3231_PORT, DS3231_ADDR); TMOUT_CHECK
-  i2c_master_send(DS3231_PORT, 2 | I2C_STOP, ((uint32_t)val << 8) | reg ); TMOUT_CHECK
+  i2c_master_send(DS3231_PORT, I2C_STOP, 2, ((uint32_t)val << 8) | reg ); TMOUT_CHECK
   i2c_wait_stop(DS3231_PORT); TMOUT_CHECK
 }
 
 
 void ds3231_write_multi(uint8_t first_reg, uint8_t len, uint32_t vals) {
   i2c_master_startw(DS3231_PORT, DS3231_ADDR); TMOUT_CHECK
-  i2c_master_send(DS3231_PORT,1,first_reg); TMOUT_CHECK
-  i2c_master_send(DS3231_PORT, (len & 0x07) | I2C_STOP, vals); TMOUT_CHECK
+  i2c_master_send(DS3231_PORT, I2C_NOOPTS, 1, first_reg); TMOUT_CHECK
+  i2c_master_send(DS3231_PORT, I2C_STOP, len & 0x07, vals); TMOUT_CHECK
   i2c_wait_stop(DS3231_PORT); TMOUT_CHECK
 }
 

@@ -7,6 +7,18 @@
 #include "utils.h"
 #include "ic/ds3231.h"
 
+#define I2C_PORT I2C0_id
+
+#define TMOUT_CHECK     if (i2c_get_tmout(id)) return;
+#define TMOUT_CHECK2    if (i2c_get_tmout(id)) goto failure;
+
+
+/// Буфер данных
+#define BUFLEN 16
+uint8_t  buf[BUFLEN]; ///< данные буфера
+uint32_t bufp;        ///< указатель буфера
+uint32_t bufn;        ///< размер данных на отправку
+
 
 void i2c_test_master_setup() {
   i2c_init(DS3231_PORT);
@@ -31,16 +43,17 @@ void i2c_test_master_setup() {
 }
 
 
-void i2c_test_master_w1r() {
+
+void i2c_test_master_w1r_ds3231() {
   uint32_t d;
 
   while (1) {
-    d=ds3231_read_multi(6,6); //d=clock_get_bcd();
-    if (i2c_get_tmout(DS3231_PORT)) {
-      d=i2c_get_status(DS3231_PORT);
+    d=ds3231_read_multi(10,10); //d=clock_get_bcd();
+    if (i2c_get_tmout(I2C_PORT)) {
+      d=i2c_get_status(I2C_PORT);
       debug32hex('S',d); i2c_print_status(d);
       led2_flash();
-      i2c_clr_status(DS3231_PORT, I2C_STA_TMOUTF_mask_w);
+      i2c_clr_status(I2C_PORT, I2C_STA_TMOUTF_mask_w);
     }
     else {
       debug32hex('T',d);
@@ -57,11 +70,11 @@ void i2c_test_master_wN(uint8_t n) {
 
   while (1) {
     ds3231_write_multi(1,n,*(uint32_t*)buf); //d=clock_get_bcd();
-    if (i2c_get_tmout(DS3231_PORT)) {
-      d=i2c_get_status(DS3231_PORT);
+    if (i2c_get_tmout(I2C_PORT)) {
+      d=i2c_get_status(I2C_PORT);
       debug32hex('S',d); i2c_print_status(d);
       led2_flash();
-      i2c_clr_status(DS3231_PORT, I2C_STA_TMOUTF_mask_w);
+      i2c_clr_status(I2C_PORT, I2C_STA_TMOUTF_mask_w);
     }
     else {
       uart_puts(PORT,"OK",UART_NEWLINE_CRLF);
@@ -71,3 +84,45 @@ void i2c_test_master_wN(uint8_t n) {
 
 }
 
+
+void i2c_test_master_req(uint32_t id, uint8_t addr, void* buf, uint8_t nbytes) {
+  uint8_t i=0,n;
+  uint32_t d;
+  // Отправка запроса:
+  i2c_master_startw(id, addr); TMOUT_CHECK
+  i2c_master_send(id, I2C_START, 1, nbytes); TMOUT_CHECK
+  i2c_wait_start(id); TMOUT_CHECK
+  // Получение ответа:
+  i2c_master_startr(id, addr); TMOUT_CHECK
+  while ( (n = nbytes-i) > 0 ) {
+    if (n > 4) {
+      n=4;
+      d=i2c_master_recv(id, I2C_NOOPTS, 4); TMOUT_CHECK
+    }
+    else {
+      d=i2c_master_recv(id, I2C_STOP, n); TMOUT_CHECK
+    }
+    *(uint32_t*)((uint8_t*)buf+i)=d;
+    i += n;
+  }
+  i2c_wait_stop(id);
+}
+
+
+void i2c_test_master_w1r() {
+  uint32_t d;
+  uint8_t n=10;
+  while (1) {
+    i2c_test_master_req(I2C_PORT,DS3231_ADDR,buf,n);
+    d=i2c_get_status(I2C_PORT);
+    if (d & I2C_STA_TMOUTF_mask_w) {
+      debug32hex('S',d); i2c_print_status(d);
+      led2_flash();
+      i2c_clr_status(I2C_PORT, I2C_STA_TMOUTF_mask_w);
+    }
+    else {
+      debugbuf(buf,n);
+    }
+    delay_ms(1000);
+  }
+}

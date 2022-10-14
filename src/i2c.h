@@ -9,10 +9,12 @@
 #define I2C0_id I2C0_Base
 #define I2C1_id I2C1_Base
 
+/// Опции по формату регистра I2Cx_CR2
 enum I2C_Options {
-  I2C_ACK       = 0x40,
-  I2C_STOP      = 0x20,
-  I2C_START     = 0x10
+  I2C_NOOPTS    = 0,
+  I2C_ACK       = I2C_CR2_CMD_TC_enable_w | I2C_CR2_AA_LCK_un_locked_w | I2C_CR2_PAA_mask_w,
+  I2C_STOP      = I2C_CR2_CMD_TC_enable_w | I2C_CR2_STO_LCK_un_locked_w | I2C_CR2_PSTO_mask_w,
+  I2C_START     = I2C_CR2_CMD_TC_enable_w | I2C_CR2_STA_LCK_un_locked_w | I2C_CR2_PSTA_mask_w
 };
 
 
@@ -47,14 +49,43 @@ void i2c_wait_start(uint32_t id);
 void i2c_wait_stop(uint32_t id);
 
 /// Режим master: передача в режиме Buffer len байт (1-4) из data.
-/// Генерирует состояние STOP, если бит 7 len установлен.
-void i2c_master_send(uint32_t id, uint8_t len, uint32_t data);
+/// Генерирует состояние STOP, если указана опция I2C_STOP.
+/// Блокирующая функция с таймаутом: ожидает флаг TXF.
+void i2c_master_send(uint32_t id, uint32_t opts, uint8_t len, uint32_t data);
 
 /// Режим master: прием в режиме Buffer len байт (1-4).
-/// Генерирует ACK, если бит 6 len установлен.
-/// Генерирует состояние STOP, если бит 7 len установлен.
-/// Блокирующая функция: ожидает флаг RXF.
-uint32_t i2c_master_recv(uint32_t id, uint8_t len);
+/// Генерирует ACK, если указана опция I2C_ACK.
+/// Генерирует состояние STOP, если указана опция I2C_STOP.
+/// Блокирующая функция с таймаутом: ожидает флаг RXF.
+uint32_t i2c_master_recv(uint32_t id, uint32_t opts, uint8_t len);
+
+
+/// Запись данных в буфер отправки (1-4 байта)
+inline
+void i2c_write(uint32_t id, uint32_t data, uint8_t len) {
+  RB(id+( I2C0_CR2_b1 -I2C0_Base)) = (len & I2C_CR2_BUF_CNT_mask_b1); // BUF_CNT
+  RW(id+( I2C0_DAT_w -I2C0_Base)) = data;
+}
+
+/// Чтение буфера приема (4 байта)
+inline
+uint32_t i2c_read(uint32_t id) {
+  return RW(id+( I2C0_DAT_w -I2C0_Base));
+}
+
+
+/// Запись данных из буфера программы в буфер отправки.
+/// На входе: *p - текущее положение в буфере (указывает на следующий байт после отправленного).
+/// На выходе: *p - новое значение, увеличенное на число отправленных байт.
+/// Возвращает оставшееся число байт.
+uint32_t i2c_writebuf(uint32_t id, void* buf, uint32_t* p, uint32_t len);
+
+
+/// Чтение принятых данных и их запись в указанный буфер.
+/// На входе: *p - текущее положение в буфере (указывает на следующий байт после записанного).
+/// На выходе: *p - новое значение, увеличенное на число считанных байт.
+/// Возвращает фактическое число считанных байт.
+uint8_t i2c_readbuf(uint32_t id, void* buf, uint32_t* p);
 
 
 /// Настройка таймера таймаута, режим работы mode определяется по формату младшего байта регистра I2Cx_TMOUT.

@@ -98,19 +98,16 @@ void i2c_wait_stop(uint32_t id) {
 }
 
 
-void i2c_master_send(uint32_t id, uint8_t len, uint32_t data) {
+void i2c_master_send(uint32_t id, uint32_t opts, uint8_t len, uint32_t data) {
   RW(id+( I2C0_STA_w -I2C0_Base)) |= I2C_STA_TXF_mask_w; // сбрасываем TXF, иначе финальная проверка в конце функции может сработать сразу после старта
-  RW(id+( I2C0_CR2_w -I2C0_Base)) =
-      ((len & 0x07) << 8) | // BUF_CNT
-      ((len & I2C_STOP)   ? (I2C_CR2_CMD_TC_enable_w | I2C_CR2_STO_LCK_un_locked_w | I2C_CR2_PSTO_mask_w) : 0) | // auto stop
-      ((len & I2C_START)  ? (I2C_CR2_CMD_TC_enable_w | I2C_CR2_STA_LCK_un_locked_w | I2C_CR2_PSTA_mask_w) : 0);  // auto restart
+  RW(id+( I2C0_CR2_w -I2C0_Base)) = opts | (len << 8); // BUF_CNT
   RW(id+( I2C0_DAT_w -I2C0_Base)) = data;
   i2c_setup_tmout(id,0);
   while (! (RW(id+( I2C0_STA_w -I2C0_Base)) & (I2C_STA_TXF_happened_w | I2C_STA_TMOUTF_happened_w) )) ;
 }
 
 
-uint32_t i2c_master_recv(uint32_t id, uint8_t len) {
+uint32_t i2c_master_recv(uint32_t id, uint32_t opts, uint8_t len) {
   //uint32_t d;
 
   //i2c_status[6]=RW(id+( I2C0_STA_w -I2C0_Base));  i2c_status[7]=RW(id+( I2C0_CR2_w -I2C0_Base));
@@ -120,10 +117,7 @@ uint32_t i2c_master_recv(uint32_t id, uint8_t len) {
 
   //i2c_status[8]=RW(id+( I2C0_STA_w -I2C0_Base));  i2c_status[9]=RW(id+( I2C0_CR2_w -I2C0_Base));
 
-  RW(id+( I2C0_CR2_w -I2C0_Base)) =
-      ((len & 0x07) << 8) | // BUF_CNT
-      ((len & I2C_ACK)    ? (I2C_CR2_CMD_TC_enable_w | I2C_CR2_AA_LCK_un_locked_w | I2C_CR2_PAA_mask_w) : 0) |  // ACK
-      ((len & I2C_STOP)   ? (I2C_CR2_CMD_TC_enable_w | I2C_CR2_STO_LCK_un_locked_w | I2C_CR2_PSTO_mask_w) : 0); // auto stop
+  RW(id+( I2C0_CR2_w -I2C0_Base)) = opts | (len << 8); // BUF_CNT
 
   //i2c_status[10]=RW(id+( I2C0_STA_w -I2C0_Base));  i2c_status[11]=RW(id+( I2C0_CR2_w -I2C0_Base));
 
@@ -139,9 +133,26 @@ uint32_t i2c_master_recv(uint32_t id, uint8_t len) {
 }
 
 
-//void i2c_setup_tmout(uint32_t id, uint8_t mode) {
-//
-//}
+uint32_t i2c_writebuf(uint32_t id, void* buf, uint32_t* p, uint32_t len) {
+  uint8_t m;
+  int32_t n;
+  n = len - *p;
+  if (n > 0) {
+    m = n < 4 ? n : 4;
+    RB(id+( I2C0_CR2_b1 -I2C0_Base)) = (m & I2C_CR2_BUF_CNT_mask_b1); // BUF_CNT
+    RW(id+( I2C0_DAT_w -I2C0_Base)) = *(uint32_t*)((uint8_t*)buf + *p);
+    *p += m;
+  }
+  return len-*p;
+}
+
+
+uint8_t i2c_readbuf(uint32_t id, void* buf, uint32_t* p) {
+  uint8_t n = RB(id+( I2C0_CR2_b1 -I2C0_Base)) & I2C_CR2_BUF_CNT_mask_b1; // BUF_CNT
+  *(uint32_t*)((uint8_t*)buf + *p) = RW(id+( I2C0_DAT_w -I2C0_Base));
+  *p += n;
+  return n;
+}
 
 
 #ifdef I2C_DEBUG
