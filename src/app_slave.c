@@ -88,7 +88,7 @@ uint8_t i2c_slave_read(uint32_t id, uint8_t* buf, uint8_t len) {
 
 
 
-#define BUFLEN 8
+#define BUFLEN 16
 
 /// Буфер данных слэйва
 uint8_t  buf[BUFLEN]; ///< данные буфера
@@ -115,15 +115,13 @@ void i2c_hdl_w1rN() {
 
   if (d & I2C_STA_SADRF_mask_w) {
     if (d & I2C_STA_RWF_read_w) { // Master reads
-      //led2_on();
     }
     else { // Master writes
-      //led2_on();
       bufp=0; bufn=0;
     }
   }
   if (d & I2C_STA_TXF_mask_w) {
-    if (bufp==bufn) led2_on();
+    //if (bufp==bufn) led2_on();
     if (bufn > bufp) i2c_writebuf(I2C_PORT,buf,&bufp,bufn);
 
   }
@@ -191,20 +189,14 @@ void i2c_hdl_wN() {
 /// Общая настройка режима слэйва
 void i2c_test_slave() {
   uint32_t i;
-
   //ss.st=0; ss.bn=0; ss.reg=0x77;
   for (i=0; i< BUFLEN; i++) buf[i]=((i+1)<< 4) | (i+1);
 
+  // Настройка тактирования:
   i2c_init(I2C_PORT);
   // Настройка выводов I2C:
   HW_I2C0_SETSCL;  HW_I2C0_SETSDA;
-  // Настройка тактирования
-  i2c_setup_clock(I2C_PORT,
-      I2C_CLK_TMO_CKS_div64_h0 |  // CK_TMO: F(CK_PSC)/64 = 12500 Hz
-      ((15 -1) << I2C_CLK_CK_PSC_shift_h0) | // CK_PSC: 12 MHz /15 = 800 kHz
-      I2C_CLK_CK_DIV_div8_h0 |    // CK_I2Cx_INT: 200 kHz => F = 50 kHz
-      I2C_CLK_CK_SEL_proc_h0      // I2Cx_CK_SEL: APB, 12 MHz
-  );
+
   // Настройка режима работы
   i2c_setup_mode(I2C_PORT,
       I2C_CR0_PDRV_SEL_1t_w |

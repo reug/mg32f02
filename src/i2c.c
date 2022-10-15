@@ -26,6 +26,14 @@ void i2c_init(uint32_t id) {
   RB(CSC_APB0_b1) |= (id & 0x00010000) ? CSC_APB0_I2C1_EN_enable_b1 : CSC_APB0_I2C0_EN_enable_b1;
 #endif
   RH(CSC_KEY_h0) = 0; // lock access to CSC regs
+  // Настройка тактирования
+  RH(id+( I2C0_CLK_h0 -I2C0_Base)) =
+    I2C_CLK_TMO_CKS_div64_h0 |  // CK_TMO: F(CK_PSC)/64 = 37500 Hz
+    ((5 -1) << I2C_CLK_CK_PSC_shift_h0) | // CK_PSC: 12 MHz /5 = 2400 kHz
+    I2C_CLK_CK_DIV_div4_h0 |    // CK_I2Cx_INT: 600 kHz => F(SCL) = 100 kHz
+    I2C_CLK_CK_SEL_proc_h0;     // I2Cx_CK_SEL: APB, 12 MHz
+  // Тайминг режима master
+  RH(I2C0_CR1_h0) = 0x0202; // (2+HT+LT) = 6
 }
 
 
@@ -66,18 +74,14 @@ void i2c_master_startw(uint32_t id, uint8_t addr) {
 
 
 void i2c_master_startr(uint32_t id, uint8_t addr) {
-  //i2c_status[0]=RW(id+( I2C0_STA_w -I2C0_Base));  i2c_status[1]=RW(id+( I2C0_CR2_w -I2C0_Base));
   RW(id+( I2C0_CR2_w -I2C0_Base)) =
       (1 << 8) | // BUF_CNT
       I2C_CR2_STA_LCK_un_locked_w | I2C_CR2_STA_mask_w; // STA
-  //i2c_status[2]=RW(id+( I2C0_STA_w -I2C0_Base));  i2c_status[3]=RW(id+( I2C0_CR2_w -I2C0_Base));
   RB(id+( I2C0_DAT_b0 -I2C0_Base)) = addr | 0x01;
-  //i2c_status[4]=RW(id+( I2C0_STA_w -I2C0_Base));  i2c_status[5]=RW(id+( I2C0_CR2_w -I2C0_Base));
   i2c_setup_tmout(id,0);
   //while (! (RW(id+( I2C0_STA_w -I2C0_Base)) & I2C_STA_TSCF_happened_w)) ; // Работает, но лучше так:
   while (! (RW(id+( I2C0_STA_w -I2C0_Base)) & (I2C_STA_SADRF_happened_w | I2C_STA_TMOUTF_happened_w) )) ;
   //while (! (RW(id+( I2C0_STA_w -I2C0_Base)) & I2C_STA_TXF_happened_w)) ; //< НЕ РАБОТАЕТ В РЕЖИМЕ ПРИЕМА!
-  //i2c_status[3]=RW(id+( I2C0_CR2_w -I2C0_Base));
 }
 
 
@@ -108,28 +112,13 @@ void i2c_master_send(uint32_t id, uint32_t opts, uint8_t len, uint32_t data) {
 
 
 uint32_t i2c_master_recv(uint32_t id, uint32_t opts, uint8_t len) {
-  //uint32_t d;
-
-  //i2c_status[6]=RW(id+( I2C0_STA_w -I2C0_Base));  i2c_status[7]=RW(id+( I2C0_CR2_w -I2C0_Base));
-
   //RW(id+( I2C0_STA_w -I2C0_Base)) |= I2C_STA_RXF_mask_w; // Так сбрасывать RXF не надо! Иначе будет считывание лишних байт
   //d=RW(id+( I2C0_DAT_w -I2C0_Base)); // Вот так RXF сбросить можно!
 
-  //i2c_status[8]=RW(id+( I2C0_STA_w -I2C0_Base));  i2c_status[9]=RW(id+( I2C0_CR2_w -I2C0_Base));
-
   RW(id+( I2C0_CR2_w -I2C0_Base)) = opts | (len << 8); // BUF_CNT
-
-  //i2c_status[10]=RW(id+( I2C0_STA_w -I2C0_Base));  i2c_status[11]=RW(id+( I2C0_CR2_w -I2C0_Base));
-
   i2c_setup_tmout(id,0);
-
   while (! (RW(id+( I2C0_STA_w -I2C0_Base)) & (I2C_STA_RXF_happened_w | I2C_STA_TMOUTF_happened_w) )) ;
-  //i2c_status[12]=RW(id+( I2C0_STA_w -I2C0_Base));  i2c_status[13]=RW(id+( I2C0_CR2_w -I2C0_Base));
   return RW(id+( I2C0_DAT_w -I2C0_Base));
-
-  //i2c_status[14]=RW(id+( I2C0_STA_w -I2C0_Base));  i2c_status[15]=RW(id+( I2C0_CR2_w -I2C0_Base));
-
-  //return d;
 }
 
 

@@ -25,15 +25,6 @@ void i2c_test_master_setup() {
   HW_I2C0_SETSCL;
   HW_I2C0_SETSDA;
 
-  // Настройка тактирования
-  i2c_setup_clock(DS3231_PORT,
-      I2C_CLK_TMO_CKS_div64_h0 |  // CK_TMO: F(CK_PSC)/64 = 12500 Hz
-      ((15 -1) << I2C_CLK_CK_PSC_shift_h0) | // CK_PSC: 12 MHz /15 = 800 kHz
-      I2C_CLK_CK_DIV_div8_h0 |    // CK_I2Cx_INT: 200 kHz => F = 50 kHz
-      I2C_CLK_CK_SEL_proc_h0      // I2Cx_CK_SEL: APB, 12 MHz
-  );
-  // Тайминг режима master
-  //RW(I2C0_CR1_w) = 0x0202;
   // Настройка режима работы
   i2c_setup_mode(DS3231_PORT,
       I2C_CR0_PDRV_SEL_1t_w |

@@ -12,6 +12,7 @@
 /// Опции по формату регистра I2Cx_CR2
 enum I2C_Options {
   I2C_NOOPTS    = 0,
+  I2C_NACK      = I2C_CR2_CMD_TC_enable_w | I2C_CR2_AA_LCK_un_locked_w,
   I2C_ACK       = I2C_CR2_CMD_TC_enable_w | I2C_CR2_AA_LCK_un_locked_w | I2C_CR2_PAA_mask_w,
   I2C_STOP      = I2C_CR2_CMD_TC_enable_w | I2C_CR2_STO_LCK_un_locked_w | I2C_CR2_PSTO_mask_w,
   I2C_START     = I2C_CR2_CMD_TC_enable_w | I2C_CR2_STA_LCK_un_locked_w | I2C_CR2_PSTA_mask_w
@@ -92,7 +93,7 @@ uint8_t i2c_readbuf(uint32_t id, void* buf, uint32_t* p);
 inline
 void i2c_setup_tmout(uint32_t id, uint8_t mode) {
   RH(id+( I2C0_TMOUT_h0 -I2C0_Base)) =
-    (125 << I2C_TMOUT_TMO_CNT_shift_h0) | // период счета 10 мс
+    (38 << I2C_TMOUT_TMO_CNT_shift_h0) | // период счета ~1 мс для F(CK_TMO)=37.5 кГц
     mode |
     // I2C_TMOUT_TMO_MDS_scl_low_h0 |
     // I2C_TMOUT_TMO_MDS_scl_sda_high_h0 |
