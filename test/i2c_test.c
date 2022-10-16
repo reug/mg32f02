@@ -102,7 +102,7 @@ void i2c_test_master_req(uint32_t id, uint8_t addr, void* buf, uint8_t nbytes) {
 
 void i2c_test_master_w1r() {
   uint32_t d;
-  uint8_t n=10;
+  uint8_t n=9;
   while (1) {
     i2c_test_master_req(I2C_PORT,DS3231_ADDR,buf,n);
     d=i2c_get_status(I2C_PORT);

@@ -129,7 +129,12 @@ uint32_t i2c_writebuf(uint32_t id, const void* buf, uint32_t* p, uint32_t len) {
   if (n > 0) {
     m = n < 4 ? n : 4;
     RB(id+( I2C0_CR2_b1 -I2C0_Base)) = (m & I2C_CR2_BUF_CNT_mask_b1); // BUF_CNT
-    RW(id+( I2C0_DAT_w -I2C0_Base)) = *(uint32_t*)((uint8_t*)buf + *p);
+    switch (m) {
+      case 1: RB(id+( I2C0_DAT_b0 -I2C0_Base)) = *((uint8_t*)buf + *p); break;
+      case 2: RH(id+( I2C0_DAT_h0 -I2C0_Base)) = *(uint16_t*)((uint8_t*)buf + *p); break;
+      default:
+        RW(id+( I2C0_DAT_w -I2C0_Base)) = *(uint32_t*)((uint8_t*)buf + *p); break;
+    }
     *p += m;
   }
   return len-*p;

@@ -1,0 +1,27 @@
+shell_patterns=0
+0 minicom ttyUSB0
+    minicom -D /dev/ttyUSB0
+1 minicom ttyUSB1
+    minicom -D /dev/ttyUSB1
+2 minicom ttyUSB2
+    minicom -D /dev/ttyUSB2
+3 OpenOCD MG32F02A032
+    /opt/openocd/bin/openocd -s /opt/openocd -d2 -f jlink.cfg -f mg32f02a032.cfg
+4 OpenOCD MG32F02A064
+    /opt/openocd/bin/openocd -s /opt/openocd -d2 -f jlink.cfg -f mg32f02a064.cfg
+a Upload app
+    ./run_app
+s Upload slave
+    ./run_slave
+v Upload svr
+    ./run_svr
+r Reset
+    ./reset
+k List svr
+    ./lst_svr
+l List app
+    ./lst_app
+m List slave
+    ./lst_slave
+g Git
+    git gui

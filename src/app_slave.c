@@ -120,7 +120,7 @@ void i2c_hdl_w1rN() {
       //led1_on();
     }
     else { // Master writes
-      //bufp=0; bufn=0;
+      bufp=0; bufn=0;
     }
   }
   if (d & I2C_STA_TXF_mask_w) {
