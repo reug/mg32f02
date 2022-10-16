@@ -19,7 +19,7 @@ void uart_init(uint8_t port_no);
 void uart_tx(uint8_t port_no, uint8_t d);
 
 /// Блокирующая отправка данных из буфера
-void uart_send(uint8_t port_no, void* buf, uint32_t len);
+void uart_send(uint8_t port_no, const void* buf, uint32_t len);
 
 /// Блокирующая отправка Си-строки с опциональными завершающими символами
 void uart_puts(uint8_t port_no, const char* s, uint32_t newline);

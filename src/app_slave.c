@@ -110,27 +110,29 @@ void i2c_hdl_w1rN() {
   uint32_t d; // флаги
   uint32_t n;
 
-  led1_on();
+  //led1_on();
   d=i2c_get_status(I2C_PORT);
 
   if (d & I2C_STA_SADRF_mask_w) {
     if (d & I2C_STA_RWF_read_w) { // Master reads
+      //bufp=0;
+      //i2c_writebuf(I2C_PORT,buf,&bufp,bufn); // Подготавливаем данные для отправки (копируем в буфер максимум байт (4))
+      //led1_on();
     }
     else { // Master writes
-      bufp=0; bufn=0;
+      //bufp=0; bufn=0;
     }
   }
   if (d & I2C_STA_TXF_mask_w) {
     //if (bufp==bufn) led2_on();
-    if (bufn > bufp) i2c_writebuf(I2C_PORT,buf,&bufp,bufn);
-
+    if (bufn > bufp) {i2c_writebuf(I2C_PORT,buf,&bufp,bufn); led1_on();}
   }
   if (d & I2C_STA_RXF_mask_w) {
-    n=i2c_read(I2C_PORT);
-    //if (n==6) led2_on();
+    n=i2c_read(I2C_PORT) & 0xFF;
     bufn = (n <= BUFLEN) ? n : BUFLEN;
+    bufp=0;
     i2c_writebuf(I2C_PORT,buf,&bufp,bufn); // Подготавливаем данные для отправки (копируем в буфер максимум байт (4))
-    //led2_on();
+    led1_on();
     //if (bufp==4) led2_on();
   }
   if (d & I2C_STA_STOPF_mask_w) {
@@ -139,7 +141,7 @@ void i2c_hdl_w1rN() {
   if (d & I2C_STA_RSTRF_mask_w) {
     //led2_on();
   }
-  led1_off(); led2_off();
+  led1_off(); //led2_off();
   //i2c_clr_status(I2C_PORT, I2C_STA_BUFF_mask_w);
   //i2c_clr_status(I2C_PORT, d);
   i2c_clr_status(I2C_PORT, 0x00ffffff);
@@ -148,7 +150,7 @@ void i2c_hdl_w1rN() {
 
 /// Обработчик прерывания I2C0
 void i2c_hdl_wN() {
-  uint32_t n; // число байт на отправку
+  //uint32_t n; // число байт на отправку
   uint32_t d;
 
   led1_on();
@@ -167,7 +169,7 @@ void i2c_hdl_wN() {
     //led2_on();
   }
   if (d & I2C_STA_RXF_mask_w) {
-    n=i2c_readbuf(I2C_PORT,buf,&bufp);
+    i2c_readbuf(I2C_PORT,buf,&bufp);
     if ( bufp== 5) led2_on();
     //led2_on();
   }
@@ -222,7 +224,7 @@ void i2c_test_slave() {
 
   while (1) {
     // Проверка ACNT:
-    //if (RB(I2C0_CR2_b2) & 0x07) led2_on();
+    if (RB(I2C0_CR2_b2) & 0x07) led2_on(); else led2_off();
     // Проверка CNTF:
     //if (RW(I2C0_STA_w) & I2C_STA_EVENTF_mask_w) {led2_on(); __NOP(); led2_off();}
   }

@@ -54,7 +54,7 @@ void uart_tx(uint8_t port_no, uint8_t d) {
 }
 
 
-void uart_send(uint8_t port_no, void* buf, uint32_t len) {
+void uart_send(uint8_t port_no, const void* buf, uint32_t len) {
   uint32_t i;
   for (i=0; i<len; i++) uart_tx(port_no, *((uint8_t*)buf+i));
 }

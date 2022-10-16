@@ -122,7 +122,7 @@ uint32_t i2c_master_recv(uint32_t id, uint32_t opts, uint8_t len) {
 }
 
 
-uint32_t i2c_writebuf(uint32_t id, void* buf, uint32_t* p, uint32_t len) {
+uint32_t i2c_writebuf(uint32_t id, const void* buf, uint32_t* p, uint32_t len) {
   uint8_t m;
   int32_t n;
   n = len - *p;
