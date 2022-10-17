@@ -158,19 +158,16 @@ void i2c_hdl_wN() {
 
   if (d & I2C_STA_SADRF_mask_w) {
     if (d & I2C_STA_RWF_read_w) { // Master reads
-      //led2_on();
     }
     else { // Master writes
-      //led2_on();
       bufp=0;
     }
   }
-  if (d & I2C_STA_TXF_mask_w) {
-    //led2_on();
-  }
+  //if (d & I2C_STA_TXF_mask_w) {
+  //}
   if (d & I2C_STA_RXF_mask_w) {
     i2c_readbuf(I2C_PORT,buf,&bufp);
-    if ( bufp== 5) led2_on();
+    //if ( bufp== 5) led2_on();
     //led2_on();
   }
   if (d & I2C_STA_STOPF_mask_w) {
@@ -178,10 +175,10 @@ void i2c_hdl_wN() {
     debugbuf(buf,bufp);
     //bufp=0;
   }
-  if (d & I2C_STA_RSTRF_mask_w) {
-    //led2_on();
-  }
-  led1_off(); led2_off();
+//  if (d & I2C_STA_RSTRF_mask_w) {
+//    //led2_on();
+//  }
+  led1_off();// led2_off();
   //i2c_clr_status(I2C_PORT, I2C_STA_BUFF_mask_w);
   //i2c_clr_status(I2C_PORT, d);
   i2c_clr_status(I2C_PORT, 0x00ffffff);
@@ -192,7 +189,7 @@ void i2c_hdl_wN() {
 void i2c_test_slave() {
   uint32_t i;
   //ss.st=0; ss.bn=0; ss.reg=0x77;
-  for (i=0; i< BUFLEN; i++) buf[i]=((i+1)<< 4) | (i+1);
+  for (i=0; i< BUFLEN; i++) buf[i]=((i+1)<< 4) | (i+1);  // инициализация буфера
 
   // Настройка тактирования:
   i2c_init(I2C_PORT);
@@ -214,7 +211,8 @@ void i2c_test_slave() {
   RB(I2C0_CR0_b1) |= I2C_CR0_SCLS_DIS_disable_b1;
 
   // Устанавливаем обработчик прерываний:
-  SVC2(SVC_HANDLER_SET,28,i2c_hdl_w1rN);
+  //SVC2(SVC_HANDLER_SET,28,i2c_hdl_w1rN);
+  SVC2(SVC_HANDLER_SET,28,i2c_hdl_wN);
   // Включаем прерывания в модуле:
   RW(I2C0_INT_w) =
     I2C_INT_BUF_IE_enable_w | // flags: RXF, TXF, RSTRF, STOPF, SADRF

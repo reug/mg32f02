@@ -37,9 +37,8 @@ void i2c_test_master_setup() {
 
 void i2c_test_master_w1r_ds3231() {
   uint32_t d;
-
   while (1) {
-    d=ds3231_read_multi(10,10); //d=clock_get_bcd();
+    d=clock_get_bcd(); //d=ds3231_read_multi(10,10);
     if (i2c_get_tmout(I2C_PORT)) {
       d=i2c_get_status(I2C_PORT);
       debug32hex('S',d); i2c_print_status(d);
@@ -51,7 +50,6 @@ void i2c_test_master_w1r_ds3231() {
     }
     delay_ms(1000);
   }
-
 }
 
 
@@ -60,7 +58,7 @@ void i2c_test_master_wN(uint8_t n) {
   uint8_t buf[]={0xA1,0xB2,0xC3,0xD4,0xE5,0xF6};
 
   while (1) {
-    ds3231_write_multi(1,n,*(uint32_t*)buf); //d=clock_get_bcd();
+    ds3231_write_multi(1,n,*(uint32_t*)buf);
     if (i2c_get_tmout(I2C_PORT)) {
       d=i2c_get_status(I2C_PORT);
       debug32hex('S',d); i2c_print_status(d);

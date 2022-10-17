@@ -23,11 +23,14 @@ enum I2C_Options {
 void i2c_init(uint32_t id);
 
 /// Установка режима работы модуля I2C по формату регистра CR0 (устанавливает I2Cx_EN)
-void i2c_setup_mode(uint32_t id, uint32_t mode);
-
+inline
+void i2c_setup_mode(uint32_t id, uint32_t mode) {
+  RW(id+( I2C0_CR0_w -I2C0_Base)) = mode | I2C_CR0_EN_enable_w; // включаем модуль
+}
+/*
 /// Настройка тактирования согласно формату регистра CLK
 void i2c_setup_clock(uint32_t id, uint16_t mode);
-
+*/
 /// Включение прерывания INT_I2Cx по флагам, указанным в flags согласно формату I2Cx_INT
 void i2c_setup_int(uint32_t id, uint32_t flags);
 

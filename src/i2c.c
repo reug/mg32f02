@@ -36,16 +36,16 @@ void i2c_init(uint32_t id) {
   RH(I2C0_CR1_h0) = 0x0202; // (2+HT+LT) = 6
 }
 
-
+/*
 void i2c_setup_mode(uint32_t id, uint32_t mode) {
   RW(id+( I2C0_CR0_w -I2C0_Base)) = mode | I2C_CR0_EN_enable_w; // включаем модуль
 }
-
-
+*/
+/*
 void i2c_setup_clock(uint32_t id, uint16_t mode) {
   RH(id+( I2C0_CLK_h0 -I2C0_Base)) = mode;
 }
-
+*/
 
 void i2c_setup_int(uint32_t id, uint32_t flags) {
   RW(id+( I2C0_INT_w -I2C0_Base)) = flags | I2C_INT_IEA_enable_w; // включаем прерывания в модуле
