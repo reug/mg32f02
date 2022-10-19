@@ -203,6 +203,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src/rtc.h" />
+		<Unit filename="src/spi.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/spi.h" />
 		<Unit filename="src/startup.c">
 			<Option compilerVar="CC" />
 			<Option target="svr32" />

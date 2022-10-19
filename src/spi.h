@@ -6,10 +6,17 @@
 #include <stdint.h>
 
 
-///// Опции по формату регистра
-//enum SPI_Options {
-//  I2C_NOOPTS    = 0,
-//};
+/// Опции конфигурации по формату регистра SPI0_CR0
+enum SPI_Config {
+  SPI_CPOL_LOW    = SPI_CR0_CPOL_low_w,
+  SPI_CPOL_HIGH   = SPI_CR0_CPOL_high_w,
+  SPI_CPHA_LE     = SPI_CR0_CPHA_leading_edge_w,
+  SPI_CPHA_TE     = SPI_CR0_CPHA_trailing_edge_w,
+  SPI_MSB         = SPI_CR0_LSB_EN_disable_w,
+  SPI_LSB         = SPI_CR0_LSB_EN_enable_w,
+  SPI_SLAVE       = SPI_CR0_MDS_slave_w,
+  SPI_MASTER      = SPI_CR0_MDS_master_w
+};
 
 
 /// Инициализация модуля SPI0 (включение тактирования)
