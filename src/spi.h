@@ -8,10 +8,10 @@
 
 /// Опции конфигурации по формату регистра SPI0_CR0
 enum SPI_Config {
-  SPI_CPOL_LOW    = SPI_CR0_CPOL_low_w,
-  SPI_CPOL_HIGH   = SPI_CR0_CPOL_high_w,
-  SPI_CPHA_LE     = SPI_CR0_CPHA_leading_edge_w,
-  SPI_CPHA_TE     = SPI_CR0_CPHA_trailing_edge_w,
+  SPI_CPOL_LOW    = SPI_CR0_CPOL_low_w,             // CPOL=0
+  SPI_CPOL_HIGH   = SPI_CR0_CPOL_high_w,            // CPOL=1
+  SPI_CPHA_LE     = SPI_CR0_CPHA_leading_edge_w,    // CPHA=0
+  SPI_CPHA_TE     = SPI_CR0_CPHA_trailing_edge_w,   // CPHA=1
   SPI_MSB         = SPI_CR0_LSB_EN_disable_w,
   SPI_LSB         = SPI_CR0_LSB_EN_enable_w,
   SPI_SLAVE       = SPI_CR0_MDS_slave_w,
@@ -27,11 +27,6 @@ inline
 void spi_setup_mode(uint32_t mode) {
   RW(SPI0_CR0_w) = mode | SPI_CR0_EN_enable_w; // включаем модуль
 }
-
-/*
-/// Настройка тактирования согласно формату регистра CLK
-void i2c_setup_clock(uint32_t id, uint16_t mode);
-*/
 
 /// Включение прерывания INT_SPI0 по флагам, указанным в flags согласно формату SPI0_INT
 void spi_setup_int(uint16_t flags);

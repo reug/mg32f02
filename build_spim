@@ -1,0 +1,3 @@
+premake5 gmake
+#make clean
+make spim verbose=1
