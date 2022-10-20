@@ -135,6 +135,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="ic/ds3231.h" />
+		<Unit filename="ic/enc28j60.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="ic/enc28j60.h" />
 		<Unit filename="ic/tm1637.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -249,6 +253,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="test/i2c_test.h" />
+		<Unit filename="test/spi_test.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="test/spi_test.h" />
 		<Unit filename="test/st_rtc_test.c">
 			<Option compilerVar="CC" />
 		</Unit>
