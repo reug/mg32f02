@@ -15,8 +15,18 @@ enum SPI_Config {
   SPI_MSB         = SPI_CR0_LSB_EN_disable_w,
   SPI_LSB         = SPI_CR0_LSB_EN_enable_w,
   SPI_SLAVE       = SPI_CR0_MDS_slave_w,
-  SPI_MASTER      = SPI_CR0_MDS_master_w
+  SPI_MASTER      = SPI_CR0_MDS_master_w,
+  SPI_NSSO_EN     = SPI_CR0_NSSO_EN_enable_w,       // Разрешить управление сигналом NSSO
+  SPI_NSSI_EN     = SPI_CR0_NSSI_EN_enable_w,       // Разрешить управление сигналом NSSI
+  SPI_NSS_SWEN    = SPI_CR0_NSS_SWEN_enable_w,      // Разрешить программное управление сигналом NSS
+  SPI_NSSO_INV    = SPI_CR0_NSSO_INV_enable_w       // Инвертировать NSSO
 };
+
+
+///// Опции по формату регистра SPI0_CR2
+//enum SPI_Options2 {
+//  SPI_SWO
+//}
 
 
 /// Инициализация модуля SPI0 (включение тактирования)
@@ -31,23 +41,31 @@ void spi_setup_mode(uint32_t mode) {
 /// Включение прерывания INT_SPI0 по флагам, указанным в flags согласно формату SPI0_INT
 void spi_setup_int(uint16_t flags);
 
-///// Перезапуск модуля с текущими настройками
-//void i2c_reset(uint32_t id);
-//
-///// Генерирует состояние START + WRITE с указанным адресом (младший бит должен быть 0).
-//void i2c_master_startw(uint32_t id, uint8_t addr);
-//
-///// Генерирует состояние START + READ с указанным адресом (младший бит должен быть 0).
-//void i2c_master_startr(uint32_t id, uint8_t addr);
-//
-///// Генерирует состояние STOP.
-//void i2c_master_stop(uint32_t id);
-//
-///// Ожидает состояние REPEAT START.
-//void i2c_wait_start(uint32_t id);
-//
-///// Ожидает состояние STOP.
-//void i2c_wait_stop(uint32_t id);
+/// Управление состоянием NSS (chip select)
+inline
+void spi_nss(uint8_t state) {
+  RB(SPI0_CR2_b3) = (state & SPI_CR2_NSS_SWO_mask_b3);
+  //RB(SPI0_CR2_b3) |= (state & SPI_CR2_NSS_SWO_mask_b3);
+}
+
+/// Передача одного байта.
+/// Размер кадра должен быть настроен на 8 бит.
+inline
+void spi_tx(uint8_t data) {
+  RB(SPI0_TDAT_b0) = data;
+  while (! (RB(SPI0_STA_b0) & SPI_STA_TCF_happened_b0)) ;
+}
+
+/// Прием одного байта.
+/// Размер кадра должен быть настроен на 8 бит.
+inline
+uint8_t spi_rx() {
+  RB(SPI0_STA_b3) = 2; // SPI0_RNUM =
+  RB(SPI0_CR2_b1) = 2; // SPI0_RX_TH = 1
+  while (! (RB(SPI0_STA_b0) & SPI_STA_RXF_happened_b0)) ;
+  //while ( (RB(SPI0_STA_b2) & SPI_STA_RX_LVL_mask_b2) ==0) ;
+  return RB(SPI0_RDAT_b0);
+}
 
 /// Передача (1-4) из data.
 /// Блокирующая функция с таймаутом: ожидает флаг TXF.

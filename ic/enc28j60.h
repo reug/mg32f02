@@ -9,7 +9,7 @@
 
 /// Top level function:
 /// Inits ENC28J60 chip.
-void eth_init(uint8_t *macadr);
+void eth_init(const uint8_t *macadr);
 
 /// Top level function:
 /// Sends Ethernet packet.
@@ -62,13 +62,14 @@ void enc28j60_write_phy(uint8_t adr, uint16_t data);
 #define ENC28J60_RXEND		    (ENC28J60_RXSIZE-1)
 #define ENC28J60_TXSTART	    ENC28J60_RXSIZE
 
+// Chip commands:
 #define ENC28J60_SPI_RCR	0x00
 #define ENC28J60_SPI_RBM	0x3A
 #define ENC28J60_SPI_WCR	0x40
 #define ENC28J60_SPI_WBM	0x7A
 #define ENC28J60_SPI_BFS	0x80
 #define ENC28J60_SPI_BFC	0xA0
-#define ENC28J60_SPI_SC		0xFF
+#define ENC28J60_SPI_SRC	0xFF
 
 #define ENC28J60_ADDR_MASK	0x1F
 #define ENC28J60_COMMON_CR	0x1B

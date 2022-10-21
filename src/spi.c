@@ -23,7 +23,8 @@ void spi_init() {
   RH(SPI0_CLK_h0) =
     SPI_CLK_CK_PDIV_div1_h0 |         // F(PDIV=1)  -> 12 MHz
     (2 << SPI_CLK_CK_PSC_shift_h0) |  // F(PSC=3)   ->  4 MHz
-    SPI_CLK_CK_DIV_div4_h0  |         // F(DIV=4)   ->  1 MHz = F(CK_SPI0_INT)
+    //SPI_CLK_CK_DIV_div4_h0  |         // F(DIV=4)   ->  1 MHz = F(CK_SPI0_INT)
+    SPI_CLK_CK_DIV_div8_h0  |         // F(DIV=8)   ->  0.5 MHz = F(CK_SPI0_INT)
     SPI_CLK_CK_SEL_proc_h0;           // CK_SPIx_PR =  12 MHz
 }
 
@@ -45,23 +46,20 @@ void spi_setup_int(uint16_t flags) {
 }
 
 
+//void spi_nss(uint8_t state) {
+//}
+
+
 void spi_send(uint32_t opts, uint8_t len, uint32_t data) {
-//  RW(id+( I2C0_STA_w -I2C0_Base)) |= I2C_STA_TXF_mask_w; // сбрасываем TXF, иначе финальная проверка в конце функции может сработать сразу после старта
-//  RW(id+( I2C0_CR2_w -I2C0_Base)) = opts | (len << 8); // BUF_CNT
-//  RW(id+( I2C0_DAT_w -I2C0_Base)) = data;
-//  i2c_setup_tmout(id,0);
-//  while (! (RW(id+( I2C0_STA_w -I2C0_Base)) & (I2C_STA_TXF_happened_w | I2C_STA_TMOUTF_happened_w) )) ;
+  RW(SPI0_TDAT_w) = data;
+  while (! (RW(SPI0_STA_w) & SPI_STA_TXF_happened_w)) ;
+  while (! (RW(SPI0_STA_w) & SPI_STA_TCF_happened_w)) ;
 }
 
 
 uint32_t spi_recv(uint32_t opts, uint8_t len) {
-  //RW(id+( I2C0_STA_w -I2C0_Base)) |= I2C_STA_RXF_mask_w; // Так сбрасывать RXF не надо! Иначе будет считывание лишних байт
-  //d=RW(id+( I2C0_DAT_w -I2C0_Base)); // Вот так RXF сбросить можно!
-
-//  RW(id+( I2C0_CR2_w -I2C0_Base)) = opts | (len << 8); // BUF_CNT
-//  i2c_setup_tmout(id,0);
-//  while (! (RW(id+( I2C0_STA_w -I2C0_Base)) & (I2C_STA_RXF_happened_w | I2C_STA_TMOUTF_happened_w) )) ;
-//  return RW(id+( I2C0_DAT_w -I2C0_Base));
+  while (! (RW(SPI0_STA_w) & SPI_STA_RXF_happened_w)) ;
+  return RW(SPI0_RDAT_w);
 }
 
 /*

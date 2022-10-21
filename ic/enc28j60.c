@@ -2,6 +2,7 @@
 #include "hwcf.h"
 #include "core.h"
 #include "spi.h"
+#include "ulib.h"
 
 
 uint8_t enc28j60_current_bank = 0;
@@ -9,16 +10,20 @@ uint16_t enc28j60_rxrdpt = 0;
 
 
 void enc28j60_select() {
+  spi_nss(1);
 }
 
 void enc28j60_release()  {
+  spi_nss(0);
 }
 
 uint8_t enc28j60_rx() {
-  return 0;
+  spi_tx(0xff);
+  return spi_rx();
 }
 
 void enc28j60_tx(uint8_t data) {
+  spi_tx(data);
 }
 
 
@@ -46,11 +51,11 @@ void enc28j60_write_op(uint8_t cmd, uint8_t adr, uint8_t data) {
 // Initiate software reset
 void enc28j60_soft_reset() {
   enc28j60_select();
-  enc28j60_tx(ENC28J60_SPI_SC);
+  enc28j60_tx(ENC28J60_SPI_SRC);
   enc28j60_release();
 
   enc28j60_current_bank = 0;
-  _delay_ms(1); // Wait until device initializes
+  delay_ms(1); // Wait until device initializes
 }
 
 
@@ -151,7 +156,7 @@ void enc28j60_write_phy(uint8_t adr, uint16_t data) {
  * Init & packet Rx/Tx
  */
 
-void eth_init(uint8_t *macadr) {
+void eth_init(const uint8_t *macadr) {
   // Initialize SPI
 ////  ENC28J60_SPI_DDR |= ENC28J60_SPI_CS|ENC28J60_SPI_MOSI|ENC28J60_SPI_SCK;
 ////  ENC28J60_SPI_DDR &= ~ENC28J60_SPI_MISO;

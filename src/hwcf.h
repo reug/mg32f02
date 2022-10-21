@@ -63,6 +63,7 @@
 
 // Настройка выводов SPI0 (AFS=7):
 #define HW_SPI0_SETMISO     RH(PA_CR9_h0) = (7 << 12) | (1 << 5) | 3    // PA9:  MISO input + pull-up
+//#define HW_SPI0_SETMOSI     RH(PA_CR11_h0) = (7 << 12) | 1              // PA11: MOSI open drain
 #define HW_SPI0_SETMOSI     RH(PA_CR11_h0) = (7 << 12) | 2              // PA11: MOSI push-pull output
 #define HW_SPI0_SETSCK      RH(PA_CR10_h0) = (7 << 12) | 2              // PA10: SCK push-pull output
 #define HW_SPI0_SETNSS      RH(PA_CR8_h0) = (7 << 12) | 2               // PA8:  NSS (chip select output) push-pull output

@@ -1,7 +1,7 @@
 MEMORY {
   /* MG32F02 */
   FLASH (rx) : ORIGIN = 0x0, LENGTH = 0x8000 /* 32K */
-  RAM (rwx) : ORIGIN = 0x20001000, LENGTH = 4096
+  RAM (rwx) : ORIGIN = 0x20001C00, LENGTH = 1024
 }
 
 ENTRY(Reset_Handler)

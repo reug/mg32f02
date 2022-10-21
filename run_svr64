@@ -1,5 +1,5 @@
 #!/bin/bash
 TELNET="telnet 127.0.0.1 4444"
 DIR=`pwd`
-BINFILE=$DIR/bin/svr.bin
+BINFILE=$DIR/bin/svr64.bin
 (echo "mem_ap_flash $BINFILE 0x18000000"; sleep 4;) | $TELNET
