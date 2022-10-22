@@ -46,17 +46,24 @@ void spi_test_master() {
 
   // Настройка режима работы
   spi_setup_mode(
+    //SPI_NSS_PEN |
     SPI_NSSO_INV | SPI_NSS_SWEN | // software NSS control
     SPI_NSSO_EN | SPI_MASTER | SPI_MSB | SPI_CPHA_LE | SPI_CPOL_LOW
     | SPI_CR0_DOUT_MDS_enable_w // надо включить, если нет резистора подтяжки
   );
+
+  spi_flush_rx();
+  RB(SPI0_CR2_b1) = 1; // SPI0_RX_TH = 1
 
   RW(SPI0_CR2_w) |=
    (8 << SPI_CR2_DSIZE_shift_w); // Размер кадра в битах
 
   //eth_init(addr);
 
-  spi_nss(1);   spi_tx(0xff);  spi_nss(0);  delay_ms(100);
+  spi_nss(1);
+  spi_tx(0xff);
+  spi_nss(0);
+  delay_ms(100);
 
   while (1) {
 
@@ -65,7 +72,7 @@ void spi_test_master() {
     d = enc28j60_rcr(ECON2);
     //spi_nss(0);
     debug('R',d);
-    delay_ms(100);
+    delay_ms(10);
   }
 
   //enc28j60_soft_reset();

@@ -23,8 +23,8 @@ void spi_init() {
   RH(SPI0_CLK_h0) =
     SPI_CLK_CK_PDIV_div1_h0 |         // F(PDIV=1)  -> 12 MHz
     (2 << SPI_CLK_CK_PSC_shift_h0) |  // F(PSC=3)   ->  4 MHz
-    //SPI_CLK_CK_DIV_div4_h0  |         // F(DIV=4)   ->  1 MHz = F(CK_SPI0_INT)
-    SPI_CLK_CK_DIV_div8_h0  |         // F(DIV=8)   ->  0.5 MHz = F(CK_SPI0_INT)
+    SPI_CLK_CK_DIV_div4_h0  |         // F(DIV=4)   ->  1 MHz = F(CK_SPI0_INT)
+    //SPI_CLK_CK_DIV_div8_h0  |         // F(DIV=8)   ->  0.5 MHz = F(CK_SPI0_INT)
     SPI_CLK_CK_SEL_proc_h0;           // CK_SPIx_PR =  12 MHz
 }
 
@@ -46,9 +46,44 @@ void spi_setup_int(uint16_t flags) {
 }
 
 
-//void spi_nss(uint8_t state) {
-//}
+uint8_t spi_tx(uint8_t data) {
+/*
+  // Рабочий вариант, но не оптимальный
+  RB(SPI0_TDAT_b0) = data;
+  //while (! (RB(SPI0_STA_b0) & SPI_STA_TCF_happened_b0)) ;
+  while (! (RB(SPI0_STA_b0) & SPI_STA_RXF_happened_b0)) ;
+  data = RB(SPI0_RDAT_b0);  // фиктивное чтение
+*/
+  // Оптимизированный вариант
+  asm(
+    "mov  r1,%[RDAT]\n"
+    "mov  r2,%[BASE]\n"
+    "lsl  r2,r2,#24\n"              // r2 <- SPI0_Base
+    "add  r3,r2,r1\n"               // r3 <- SPI0_RDAT_w
+    "strb r0,[r3, %[TDAT]]\n"       // RB(SPI0_TDAT_b0) = data;
+    "mov  r1,%[RXF_MASK]\n"         // r1 <- SPI_STA_RXF_mask_b0
+    "spi_tx_loop:\n"
+    "ldrb r0,[r2, %[STA]]\n"
+    "tst  r0,r1\n"                  // RB(SPI0_STA_b0) & SPI_STA_RXF_happened_b0 ?
+    "beq  spi_tx_loop\n"
+    "ldrb r0,[r3, #0]\n"            // data = RB(SPI0_RDAT_b0);  // фиктивное чтение
+    :: [BASE]"I"(SPI0_Base >> 24),
+       [STA]"I"(SPI0_STA_w-SPI0_Base),
+       [RDAT]"I"(SPI0_RDAT_w-SPI0_Base),
+       [TDAT]"I"(SPI0_TDAT_w-SPI0_RDAT_w),
+       [RXF_MASK]"I"(SPI_STA_RXF_mask_b0)
+    : "r0","r1","r2","r3"
+  );
+}
 
+/*
+uint8_t spi_rx() {
+  RB(SPI0_TDAT_b0) = 0xFF;
+  while (! (RB(SPI0_STA_b0) & SPI_STA_RXF_happened_b0)) ;
+  //while ( (RB(SPI0_STA_b2) & SPI_STA_RX_LVL_mask_b2) ==0) ;
+  return RB(SPI0_RDAT_b0);
+}
+*/
 
 void spi_send(uint32_t opts, uint8_t len, uint32_t data) {
   RW(SPI0_TDAT_w) = data;

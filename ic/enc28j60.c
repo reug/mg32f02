@@ -18,7 +18,6 @@ void enc28j60_release()  {
 }
 
 uint8_t enc28j60_rx() {
-  spi_tx(0xff);
   return spi_rx();
 }
 

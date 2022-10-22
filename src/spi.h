@@ -19,7 +19,8 @@ enum SPI_Config {
   SPI_NSSO_EN     = SPI_CR0_NSSO_EN_enable_w,       // Разрешить управление сигналом NSSO
   SPI_NSSI_EN     = SPI_CR0_NSSI_EN_enable_w,       // Разрешить управление сигналом NSSI
   SPI_NSS_SWEN    = SPI_CR0_NSS_SWEN_enable_w,      // Разрешить программное управление сигналом NSS
-  SPI_NSSO_INV    = SPI_CR0_NSSO_INV_enable_w       // Инвертировать NSSO
+  SPI_NSSO_INV    = SPI_CR0_NSSO_INV_enable_w,      // Инвертировать NSSO
+  SPI_NSS_PEN     = SPI_CR0_NSS_PEN_enable_w        // Импульс сигнала NSS между кадрами
 };
 
 
@@ -48,24 +49,33 @@ void spi_nss(uint8_t state) {
   //RB(SPI0_CR2_b3) |= (state & SPI_CR2_NSS_SWO_mask_b3);
 }
 
+/// Установка длительности импульса сигнала NSS (0 - 1T, 1 - 2T)
+inline
+void spi_nss_pulse(uint8_t v) {
+  RB(SPI0_CR1_b2) = v;
+}
+
+/// RX buffer flush. Сбрасывает RXF и RX_LVL.
+inline
+void spi_flush_rx() {
+  RB(SPI0_CR1_b0) = SPI_CR1_RDAT_CLR_enable_b0; // Flush RX buffer
+}
+
+/// TX buffer flush. Сбрасывает TX_LVL.
+inline
+void spi_flush_tx() {
+  RB(SPI0_CR1_b0) = SPI_CR1_TDAT_CLR_enable_b0; // Flush RX buffer
+}
+
 /// Передача одного байта.
 /// Размер кадра должен быть настроен на 8 бит.
-inline
-void spi_tx(uint8_t data) {
-  RB(SPI0_TDAT_b0) = data;
-  while (! (RB(SPI0_STA_b0) & SPI_STA_TCF_happened_b0)) ;
-}
+/// Возвращает прочитанный в процессе передачи байт.
+uint8_t spi_tx(uint8_t data);
 
 /// Прием одного байта.
 /// Размер кадра должен быть настроен на 8 бит.
 inline
-uint8_t spi_rx() {
-  RB(SPI0_STA_b3) = 2; // SPI0_RNUM =
-  RB(SPI0_CR2_b1) = 2; // SPI0_RX_TH = 1
-  while (! (RB(SPI0_STA_b0) & SPI_STA_RXF_happened_b0)) ;
-  //while ( (RB(SPI0_STA_b2) & SPI_STA_RX_LVL_mask_b2) ==0) ;
-  return RB(SPI0_RDAT_b0);
-}
+uint8_t spi_rx() {return spi_tx(0xFF);}
 
 /// Передача (1-4) из data.
 /// Блокирующая функция с таймаутом: ожидает флаг TXF.
