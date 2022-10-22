@@ -60,12 +60,9 @@ void uart_send(uint8_t port_no, const void* buf, uint32_t len) {
 }
 
 
-void uart_puts(uint8_t port_no, const char* s, uint32_t newline) {
+void uart_put(uint8_t port_no, uint32_t newline) {
   uint32_t i;
   uint8_t b;
-  for (i=0; s[i]!=0; i++) {
-    uart_tx(port_no, s[i]);
-  }
   for (i=4; i; i--) {
     b=(newline & 0xFF);
     if (b) uart_tx(port_no, b); else break;
@@ -74,9 +71,19 @@ void uart_puts(uint8_t port_no, const char* s, uint32_t newline) {
 }
 
 
+void uart_puts(uint8_t port_no, const char* s, uint32_t newline) {
+  uint32_t i;
+  for (i=0; s[i]!=0; i++) {
+    uart_tx(port_no, s[i]);
+  }
+  uart_put(port_no,newline);
+}
+
+
 uint8_t uart_rx(uint8_t port_no) {
   register uint32_t da=(uint32_t)port_no*0x10000;
   while ( (*(volatile uint8_t*)(URT0_STA_b0+da) & 0x40) ==0); // waiting URT0_RXF==1
   return *(volatile uint8_t*)(URT0_RDAT_b0+da);
 }
+
 

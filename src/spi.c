@@ -84,18 +84,18 @@ uint8_t spi_rx() {
   return RB(SPI0_RDAT_b0);
 }
 */
-
-void spi_send(uint32_t opts, uint8_t len, uint32_t data) {
-  RW(SPI0_TDAT_w) = data;
-  while (! (RW(SPI0_STA_w) & SPI_STA_TXF_happened_w)) ;
-  while (! (RW(SPI0_STA_w) & SPI_STA_TCF_happened_w)) ;
-}
-
-
-uint32_t spi_recv(uint32_t opts, uint8_t len) {
-  while (! (RW(SPI0_STA_w) & SPI_STA_RXF_happened_w)) ;
-  return RW(SPI0_RDAT_w);
-}
+//
+//void spi_send(uint32_t opts, uint8_t len, uint32_t data) {
+//  RW(SPI0_TDAT_w) = data;
+//  while (! (RW(SPI0_STA_w) & SPI_STA_TXF_happened_w)) ;
+//  while (! (RW(SPI0_STA_w) & SPI_STA_TCF_happened_w)) ;
+//}
+//
+//
+//uint32_t spi_recv(uint32_t opts, uint8_t len) {
+//  while (! (RW(SPI0_STA_w) & SPI_STA_RXF_happened_w)) ;
+//  return RW(SPI0_RDAT_w);
+//}
 
 /*
 uint32_t i2c_writebuf(uint32_t id, const void* buf, uint32_t* p, uint32_t len) {

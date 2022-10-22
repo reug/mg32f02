@@ -7,18 +7,6 @@
 
 #include <stdint.h>
 
-/// Top level function:
-/// Inits ENC28J60 chip.
-void eth_init(const uint8_t *macadr);
-
-/// Top level function:
-/// Sends Ethernet packet.
-void eth_sendpkt(uint8_t *data, uint16_t len);
-
-/// Top level function:
-/// Receives Ethernet packet. Returns received frame size, 0 if nothing is received.
-uint16_t eth_recvpkt(uint8_t *buf, uint16_t buflen);
-
 
 /// Reads 8-bit ENC28J60 register.
 uint8_t enc28j60_rcr(uint8_t adr);
@@ -50,6 +38,10 @@ uint16_t enc28j60_read_phy(uint8_t adr);
 
 /// Writes to PHY-level ENC28J60 registers.
 void enc28j60_write_phy(uint8_t adr, uint16_t data);
+
+
+/// Resets ENC28J60
+void enc28j60_soft_reset();
 
 
 #define ENC28J60_BUFSIZE	    0x2000

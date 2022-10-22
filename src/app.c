@@ -11,7 +11,8 @@
 //#include "test/wdt_test.h"
 //#include "test/timer_test.h"
 //#include "nco.h"
-#include "test/i2c_test.h"
+//#include "test/i2c_test.h"
+#include "test/spi_test.h"
 
 
 // Mark first word with signature "Application is present" (nop; nop: 0x46c046c0)

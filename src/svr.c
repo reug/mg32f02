@@ -100,6 +100,26 @@ void SYS_IRQHandler() {
 }
 
 __attribute__ ((interrupt))
+void EXINT0_IRQHandler() {
+  if (hdlr[3]) hdlr[3]();
+}
+
+__attribute__ ((interrupt))
+void EXINT1_IRQHandler() {
+  if (hdlr[4]) hdlr[4]();
+}
+
+__attribute__ ((interrupt))
+void EXINT2_IRQHandler() {
+  if (hdlr[5]) hdlr[5]();
+}
+
+__attribute__ ((interrupt))
+void EXINT3_IRQHandler() {
+  if (hdlr[6]) hdlr[6]();
+}
+
+__attribute__ ((interrupt))
 void ADC_IRQHandler() {
   if (hdlr[10]) hdlr[10]();
 }

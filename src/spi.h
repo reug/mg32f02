@@ -77,13 +77,13 @@ uint8_t spi_tx(uint8_t data);
 inline
 uint8_t spi_rx() {return spi_tx(0xFF);}
 
-/// Передача (1-4) из data.
-/// Блокирующая функция с таймаутом: ожидает флаг TXF.
-void spi_send(uint32_t opts, uint8_t len, uint32_t data);
-
-/// Прием данных.
-/// Блокирующая функция с таймаутом: ожидает флаг RXF.
-uint32_t spi_recv(uint32_t opts, uint8_t len);
+///// Передача (1-4) из data.
+///// Блокирующая функция с таймаутом: ожидает флаг TXF.
+//void spi_send(uint32_t opts, uint8_t len, uint32_t data);
+//
+///// Прием данных.
+///// Блокирующая функция с таймаутом: ожидает флаг RXF.
+//uint32_t spi_recv(uint32_t opts, uint8_t len);
 
 /*
 /// Запись данных в буфер отправки (1-4 байта)

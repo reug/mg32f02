@@ -196,6 +196,10 @@
 		</Unit>
 		<Unit filename="src/cmp.h" />
 		<Unit filename="src/core.h" />
+		<Unit filename="src/ethernet.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/ethernet.h" />
 		<Unit filename="src/hwcf.h" />
 		<Unit filename="src/i2c.c">
 			<Option compilerVar="CC" />

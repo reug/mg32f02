@@ -21,11 +21,13 @@ void uart_tx(uint8_t port_no, uint8_t d);
 /// Блокирующая отправка данных из буфера
 void uart_send(uint8_t port_no, const void* buf, uint32_t len);
 
+/// Вывод символов из 4-байтного буфера до 0
+void uart_put(uint8_t port_no, uint32_t newline);
+
 /// Блокирующая отправка Си-строки с опциональными завершающими символами
 void uart_puts(uint8_t port_no, const char* s, uint32_t newline);
 
 /// Блокирующее чтение одного байта
 uint8_t uart_rx(uint8_t port_no);
-
 
 #endif

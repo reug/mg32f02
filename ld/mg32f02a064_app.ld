@@ -5,7 +5,7 @@ SECTIONS {
 	  KEEP(*(.app))
 	  *(.text)
   }
-  . = 0x20001800;
+  . = 0x20001000;
   .data : {
     *(.data)
   }

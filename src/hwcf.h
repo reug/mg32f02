@@ -68,6 +68,11 @@
 #define HW_SPI0_SETSCK      RH(PA_CR10_h0) = (7 << 12) | 2              // PA10: SCK push-pull output
 #define HW_SPI0_SETNSS      RH(PA_CR8_h0) = (7 << 12) | 2               // PA8:  NSS (chip select output) push-pull output
 
+// Вывод PA12 - вход внешнего прерывания от Ethernet-интерфейса
+#define HW_EXINT0_CRH0      PA_CR12_h0              // control register
+#define HW_EXINT0_BIT       12                      // номер разряда
+#define HW_EXINT0_MASK      (1 << HW_EXINT0_BIT)    // маска
+
 #endif // HWCF_A064
 
 
