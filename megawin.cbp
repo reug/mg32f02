@@ -196,6 +196,10 @@
 		</Unit>
 		<Unit filename="src/cmp.h" />
 		<Unit filename="src/core.h" />
+		<Unit filename="src/dma.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/dma.h" />
 		<Unit filename="src/ethernet.c">
 			<Option compilerVar="CC" />
 		</Unit>

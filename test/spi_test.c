@@ -8,6 +8,7 @@
 #include "utils.h"
 #include "ic/enc28j60.h"
 #include "ethernet.h"
+#include "dma.h"
 
 
 /// Local MAC address
@@ -63,6 +64,16 @@ void exint_setup() {
 }
 
 
+void spi_test_dma() {
+  dma_init();
+  dma_setup_sd(0,
+    DMA_SPI0_RX | // источник
+    (DMA_MEM_Write << 8) // приемник
+  );
+  dma_setup_memdst(0,eth_frame);
+}
+
+
 /// Буфер данных
 #define BUFLEN 1536
 uint8_t  buf[BUFLEN]; ///< данные буфера
@@ -106,6 +117,8 @@ void spi_test_master() {
 
   //spi_nss(1);  spi_tx(0xff);  spi_nss(0);  delay_ms(100);
   uart_puts(PORT,"MAC: ",UART_NEWLINE_NONE); eth_get_addr(s); debugbuf(s,6);
+
+  spi_test_dma();
 
   while (1) {
     //enc28j60_bfs(ECON2, ECON2_PKTDEC);

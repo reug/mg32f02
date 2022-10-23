@@ -2,7 +2,7 @@
 #include "ic/enc28j60.h"
 
 
-volatile uint8_t eth_frame[ETH_FRAME_MAXSIZE];
+volatile uint8_t eth_frame[ETH_FRAME_MAXSIZE] __attribute__ ((aligned(4)));
 uint16_t enc28j60_rxrdpt = 0;
 
 

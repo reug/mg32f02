@@ -138,7 +138,7 @@ project "spim"
   setup_paths ("MG32F02A128")
   defines {"HWCF_A064"}
   defines {"SPI_DEBUG"}
-  files {"src/app.c", "src/utils.c", "src/uart.c", "test/spi_test.c", "src/spi.c", "src/init.c", "src/ulib.c", MID_SRC.."MG32x02z_GPL_MID.c", "ic/enc28j60.c", "src/ethernet.c"}
+  files {"src/app.c", "src/utils.c", "src/uart.c", "test/spi_test.c", "src/spi.c", "src/init.c", "src/ulib.c", MID_SRC.."MG32x02z_GPL_MID.c", "ic/enc28j60.c", "src/ethernet.c", "src/dma.c"}
   linkoptions {"-nostdlib"}
   linkoptions { "-Wl,--gc-sections"}
   linkoptions {"-T mg32f02a064_app.ld"}
