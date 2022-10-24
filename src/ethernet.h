@@ -10,6 +10,10 @@
 extern
 volatile uint8_t eth_frame[ETH_FRAME_MAXSIZE];
 
+/// Длина текущего пакета в буфере
+extern
+volatile uint16_t eth_frame_len;
+
 
 /* Функции для работы с буфером */
 

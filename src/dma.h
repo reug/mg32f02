@@ -36,7 +36,12 @@ enum DMA_DestinationRequestDef {
     DMA_TM36_CC2B=14,   /*!< to TM36 channel 2 - buffer data */
 };
 
+
+/// Включение контроллера DMA
 void dma_init();
+
+/// Настройка канала согласно формату регистра DMA_CHnA
+void dma_setup(uint8_t ch, uint32_t flags);
 
 /// Установка источника и приемника
 void dma_setup_sd(uint8_t ch, uint16_t srcdet);
@@ -46,6 +51,12 @@ void dma_setup_memsrc(uint8_t ch, void* addr);
 
 /// Установка адреса приемника в памяти
 void dma_setup_memdst(uint8_t ch, void* addr);
+
+/// Установка числа блоков на пересылку
+void dma_setup_amount(uint8_t ch, uint32_t n);
+
+/// Запуск передачи с указанием флагов согласно формату DMA_CHnA (b1). DMA_CH0_REQ устанавливать не надо.
+void dma_start(uint8_t ch, uint8_t chna_b1);
 
 /// Включение прерывания INT_DMA по флагам, указанным в flags согласно формату DMA_CHnA (b2)
 void dma_setup_int(uint8_t ch, uint8_t flags);

@@ -5,7 +5,8 @@
 #include "ulib.h"
 
 
-uint8_t enc28j60_current_bank = 0;
+volatile uint8_t enc28j60_current_bank = 0;
+volatile uint16_t enc28j60_rxrdpt;
 
 
 void enc28j60_select() {

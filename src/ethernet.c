@@ -3,7 +3,7 @@
 
 
 volatile uint8_t eth_frame[ETH_FRAME_MAXSIZE] __attribute__ ((aligned(4)));
-uint16_t enc28j60_rxrdpt = 0;
+volatile uint16_t eth_frame_len;
 
 
 void eth_setframe_addr(const uint8_t* addr) {
@@ -128,14 +128,14 @@ uint16_t eth_recvpkt(uint8_t *buf, uint16_t buflen) {
     enc28j60_read_buffer((void*)&status, sizeof(status));
 
     // Пакет принят успешно?
-    if(status & 0x80) { //success
+    if (status & 0x80) { //success
       len = rxlen - 4; // Выбрасываем контрольную сумму
       // Читаем пакет в буфер (если буфера не хватает, пакет обрезается)
-      if(len > buflen) len = buflen;
+      if (len > buflen) len = buflen;
       enc28j60_read_buffer(buf, len);
     }
 
-    // Set Rx read pointer to next packet
+    // Устанавливаем ERXRDPT на адрес следующего пакета - 1 (минус 1 - из-за бага)
     temp = (enc28j60_rxrdpt - 1) & ENC28J60_BUFEND;
     enc28j60_wcr16(ERXRDPT, temp);
 

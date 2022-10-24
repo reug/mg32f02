@@ -8,6 +8,11 @@
 #include <stdint.h>
 
 
+void enc28j60_select();
+
+void enc28j60_release();
+
+
 /// Reads 8-bit ENC28J60 register.
 uint8_t enc28j60_rcr(uint8_t adr);
 
@@ -42,6 +47,12 @@ void enc28j60_write_phy(uint8_t adr, uint16_t data);
 
 /// Resets ENC28J60
 void enc28j60_soft_reset();
+
+
+/// Глобальная переменная для хранения адреса в буфере ENC28J60, по которому надо записывать новый принятый кадр.
+/// (Требуется из-за бага в ENC28J60).
+extern
+volatile uint16_t enc28j60_rxrdpt;
 
 
 #define ENC28J60_BUFSIZE	    0x2000
