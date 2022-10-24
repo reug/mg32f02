@@ -2,7 +2,11 @@
 #include "ic/enc28j60.h"
 
 
+
+
+__attribute__ ((section (".eth_frame"))) __attribute__ ((__used__))
 volatile uint8_t eth_frame[ETH_FRAME_MAXSIZE] __attribute__ ((aligned(4)));
+
 volatile uint16_t eth_frame_len;
 
 

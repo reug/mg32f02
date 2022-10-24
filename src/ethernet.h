@@ -4,7 +4,8 @@
 #include <stdint.h>
 
 /// Максимальный размер буфера для кадров Ethernet
-#define ETH_FRAME_MAXSIZE 1520
+//#define ETH_FRAME_MAXSIZE 1520
+#define ETH_FRAME_MAXSIZE 512
 
 /// Глобальный буфер для кадров Ethernet
 extern

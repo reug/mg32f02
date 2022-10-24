@@ -12,4 +12,8 @@ SECTIONS {
   .bss : {
     *(.bss)
   }
+  . = 0x20001800;
+  .dma : {
+    KEEP(*(.eth_frame))
+  }
 }

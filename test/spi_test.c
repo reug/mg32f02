@@ -68,7 +68,7 @@ void exint0_hdl_dma() {
     // Пакет принят успешно?
     if (status & 0x0080) { //success
       rxlen -= 4; // Выбрасываем контрольную сумму
-      debug('R',rxlen);
+      ////debug('R',rxlen);
       // Читаем пакет в буфер (если буфера не хватает, пакет обрезается)
       eth_frame_len = (rxlen > ETH_FRAME_MAXSIZE) ? ETH_FRAME_MAXSIZE : rxlen;
 
@@ -103,7 +103,7 @@ void exint0_hdl_dma() {
 /// Обработчик прерывания DMA.
 /// Завершение процедуры считывания принятого пакета.
 void dma0_hdl() {
-  //led2_on();
+  //led1_on();
   //RB(DMA_CH0A_b0) &= ~DMA_CH0A_CH0_EN_enable_w; // reset DMA channel
   enc28j60_release();
   // Устанавливаем ERXRDPT на адрес следующего пакета - 1 (минус 1 - из-за бага)
@@ -117,13 +117,13 @@ void dma0_hdl() {
   // Attempts to decrement EPKTCNT below 0 are ignored.
   enc28j60_bfs(ECON2, ECON2_PKTDEC); // Сбрасывает флаг PKTIF, если счетчик ==0
 
+
+  RB(DMA_CH0A_b3) |= DMA_CH0A_CH0_TC2F_mask_b3; // clear flag
+
   // Разрешаем следующее прерывание:
   enc28j60_bfs(EIE,EIE_INTIE); // устанавливаем INTIE бит согласно даташиту
 
-
-
-  RB(DMA_CH0A_b3) |= DMA_CH0A_CH0_TC2F_mask_b3; // clear flag
-  //led2_off();
+  //led1_off();
 }
 
 
@@ -207,19 +207,34 @@ void spi_test_master() {
 
   spi_test_dma();
 
+
+  // Работает, если обращаться к переменной eth_frame_len, иначе - не работает! TODO
+
   while (1) {
     f = RB(DMA_CH0A_b3);
     if (f & DMA_CH0A_CH0_ERR2F_happened_b3) {
       uart_put(PORT,(UART_NEWLINE_CRLF << 8) | 'E');
+      break;
     }
     if (f & DMA_CH0A_CH0_TC2F_happened_b3) {
       led1_on();
       dma0_hdl();
       led1_off();
 
-      debugbuf(eth_frame,eth_frame_len);
+      //debugbuf(eth_frame,14);
+      //
+      //led2_flash();
+      //debugbuf(eth_frame,14);
+      //debugbuf(eth_frame,eth_frame_len);
+      //debug('L',eth_frame_len);
+      //delay_ms(eth_frame_len);
+      //led1_off();
     }
   }
+
+  //led2_flash();
+  debugbuf(eth_frame,14);
+  debug('L',eth_frame_len);
     //enc28j60_bfs(ECON2, ECON2_PKTDEC);
 
 //  n=eth_recvpkt(eth_frame,ETH_FRAME_MAXSIZE);
