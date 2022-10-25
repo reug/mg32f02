@@ -1,6 +1,7 @@
 #include <stdint.h>
 
-#define APP_ORIGIN      0x20000000
+#define APP_ORIGIN      0x00001000
+//#define APP_ORIGIN      0x20000000
 #define APP_SIGNATURE   0x46c046c0
 
 #define SVC1(no,arg0)                 asm("mov r0,%0\n" "svc %1\n" :: "r"(arg0), "I"(no) : "r0")

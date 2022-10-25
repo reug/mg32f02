@@ -23,7 +23,8 @@ void spi_init() {
   RH(SPI0_CLK_h0) =
     SPI_CLK_CK_PDIV_div1_h0 |         // F(PDIV=1)  -> 12 MHz
     (2 << SPI_CLK_CK_PSC_shift_h0) |  // F(PSC=3)   ->  4 MHz
-    SPI_CLK_CK_DIV_div4_h0  |         // F(DIV=4)   ->  1 MHz = F(CK_SPI0_INT)
+    SPI_CLK_CK_DIV_div2_h0  |         // F(DIV=2)   ->  2 MHz = F(CK_SPI0_INT)
+    //SPI_CLK_CK_DIV_div4_h0  |         // F(DIV=4)   ->  1 MHz = F(CK_SPI0_INT)
     //SPI_CLK_CK_DIV_div8_h0  |         // F(DIV=8)   ->  0.5 MHz = F(CK_SPI0_INT)
     SPI_CLK_CK_SEL_proc_h0;           // CK_SPIx_PR =  12 MHz
 }

@@ -68,7 +68,8 @@ void exint0_hdl_dma() {
     // Пакет принят успешно?
     if (status & 0x0080) { //success
       rxlen -= 4; // Выбрасываем контрольную сумму
-      ////debug('R',rxlen);
+      //debug('R',rxlen);
+      //debug16hex(rxlen);
       // Читаем пакет в буфер (если буфера не хватает, пакет обрезается)
       eth_frame_len = (rxlen > ETH_FRAME_MAXSIZE) ? ETH_FRAME_MAXSIZE : rxlen;
 
@@ -122,7 +123,7 @@ void exint_setup() {
 /// Обработчик прерывания DMA.
 /// Завершение процедуры считывания принятого пакета.
 void dma0_hdl() {
-  //led1_on();
+  led1_on();
   //RB(DMA_CH0A_b0) &= ~DMA_CH0A_CH0_EN_enable_w; // reset DMA channel
   enc28j60_release();
   // Устанавливаем ERXRDPT на адрес следующего пакета - 1 (минус 1 - из-за бага)
@@ -136,12 +137,17 @@ void dma0_hdl() {
   // Attempts to decrement EPKTCNT below 0 are ignored.
   enc28j60_bfs(ECON2, ECON2_PKTDEC); // Сбрасывает флаг PKTIF, если счетчик ==0
 
+  //debugbuf(eth_frame,eth_frame_len);
+  debug('L',eth_frame_len);
+  debugbuf(eth_frame,14);
+
   RB(DMA_CH0A_b3) |= DMA_CH0A_CH0_TC2F_mask_b3; // clear flag
 
   // Разрешаем следующее прерывание:
   enc28j60_bfs(EIE,EIE_INTIE); // устанавливаем INTIE бит согласно даташиту
 
-  //led1_off();
+  led1_off();
+
 }
 
 
@@ -158,7 +164,7 @@ void spi_test_dma() {
   // SPI_CR0_DMA_MDS_enable_b3
 
 
-  ////dma_setup_int(0,DMA_CH0A_CH0_CIE_enable_b2); // включаем прерывание по завершению передачи
+  //dma_setup_int(0,DMA_CH0A_CH0_CIE_enable_b2); // включаем прерывание по завершению передачи
   RB(DMA_INT_b0) = DMA_INT_IEA_enable_b0;
   RB(DMA_CH0A_b2) = DMA_CH0A_CH0_CIE_enable_b2;
   SVC2(SVC_HANDLER_SET,8,dma0_hdl);
@@ -188,20 +194,12 @@ void spi_test_master() {
   char s[8];
   //pin_test(8);
 
-  asm("push {r4}\n");
-  //asm("mov r0,r0\n");
-  //asm("mov r0,r0\n");
-  HW_SPI0_SETMISO;  HW_SPI0_SETMOSI;  HW_SPI0_SETSCK;  HW_SPI0_SETNSS;
-  //delay(1);
-  __NOP();
-
 
   // Настройка выводов:
-
+  HW_SPI0_SETMISO;  HW_SPI0_SETMOSI;  HW_SPI0_SETSCK;  HW_SPI0_SETNSS;
 
   // Инициализация, настройка тактирования:
   spi_init();
-  //__NOP();
 
   // Настройка режима работы
   spi_setup_mode(
@@ -228,15 +226,14 @@ void spi_test_master() {
   exint_setup();
   eth_setup_int();
   //eth_clear_int();
-  //spi_nss(1);  spi_tx(0xff);  spi_nss(0);  delay_ms(100);
 
 
   spi_test_dma();
 
   while (1) {
     //debug16hex(RH(DMA_CH0CNT_h0));
-    debug16hex(RH(DMA_CH0DCA_h0));
-    f = RB(DMA_CH0A_b3);
+    //debug16hex(RH(DMA_CH0DCA_h0));
+    //f = RB(DMA_CH0A_b3);
 //    if (f & DMA_CH0A_CH0_ERR2F_happened_b3) {
 //      uart_put(PORT,(UART_NEWLINE_CRLF << 8) | 'E');
 //      break;
@@ -260,11 +257,11 @@ void spi_test_master() {
     delay_ms(100);
   }
 
-  while (1) {
-    //debug1();
-    debug16hex(RH(DMA_CH0CNT_h0));
-    //delay_ms(10);
-  }
+//  while (1) {
+//    //debug1();
+//    debug16hex(RH(DMA_CH0CNT_h0));
+//    //delay_ms(10);
+//  }
 
   //led2_flash();
   //debugbuf(eth_frame,14);
