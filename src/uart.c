@@ -1,5 +1,6 @@
 #include "uart.h"
 #include "MG32x02z__RegAddress.h"
+#include "core.h"
 
 
 void uart_init(uint8_t port_no) {
@@ -87,3 +88,8 @@ uint8_t uart_rx(uint8_t port_no) {
 }
 
 
+void uart_send4(uint8_t port_no, uint32_t d) {
+  register uint32_t da=(uint32_t)port_no*0x10000;
+  while ( (RB(URT0_STA2_b3+da) & 0x70)); // ждем, пока URT0_TX_LVL != 0
+  RW(URT0_TDAT_w+da) = d;   // отправляем
+}

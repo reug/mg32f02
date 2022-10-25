@@ -12,8 +12,8 @@ SECTIONS {
   .bss : {
     *(.bss)
   }
-  . = 0x20001800;
-  .dma : {
+  . = 0x20001C00;
+  .dma (NOLOAD): {
     KEEP(*(.eth_frame))
   }
 }

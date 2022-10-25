@@ -21,6 +21,7 @@ void dma_setup(uint8_t ch, uint32_t flags) {
 void dma_setup_sd(uint8_t ch, uint16_t srcdet) {
   uint32_t ba=DMA_Base + 0x20*(ch+1);
   RH(ba + DMA_CH0B_w - DMA_CH0A_w) = srcdet;
+  //RW(ba + DMA_CH0B_w - DMA_CH0A_w) = DMA_CH0B_CH0_DSYNC_enable_w | DMA_CH0B_CH0_SSYNC_enable_w | srcdet;
 }
 
 

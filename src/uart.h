@@ -30,4 +30,7 @@ void uart_puts(uint8_t port_no, const char* s, uint32_t newline);
 /// Блокирующее чтение одного байта
 uint8_t uart_rx(uint8_t port_no);
 
+/// Блокирующая отправка 4-х байт
+void uart_send4(uint8_t port_no, uint32_t d);
+
 #endif

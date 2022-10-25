@@ -16,6 +16,9 @@
 /// Вывод 16-битного числа в URT<PORT> в hex и dec
 void debug(char label, uint16_t d);
 
+/// Быстрый вывод 16-битного числа в URT<PORT> в hex без метки
+void debug16hex(uint16_t h);
+
 /// Вывод 32-битного числа в URT<PORT> в dec
 void debug32(char label, uint32_t d);
 

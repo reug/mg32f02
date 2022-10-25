@@ -100,33 +100,6 @@ void exint0_hdl_dma() {
 }
 
 
-/// Обработчик прерывания DMA.
-/// Завершение процедуры считывания принятого пакета.
-void dma0_hdl() {
-  //led1_on();
-  //RB(DMA_CH0A_b0) &= ~DMA_CH0A_CH0_EN_enable_w; // reset DMA channel
-  enc28j60_release();
-  // Устанавливаем ERXRDPT на адрес следующего пакета - 1 (минус 1 - из-за бага)
-  enc28j60_wcr16(ERXRDPT, (enc28j60_rxrdpt - 1) & ENC28J60_BUFEND);
-
-  // Decrement packet counter
-
-  // Datasheet: After decrementing, if EPKTCNT is ‘0’, the EIR.PKTIF flag will automatically be cleared.
-  // Otherwise, it will remain set, indicating that additional packets are in the receive buffer
-  // and are waiting to be processed.
-  // Attempts to decrement EPKTCNT below 0 are ignored.
-  enc28j60_bfs(ECON2, ECON2_PKTDEC); // Сбрасывает флаг PKTIF, если счетчик ==0
-
-
-  RB(DMA_CH0A_b3) |= DMA_CH0A_CH0_TC2F_mask_b3; // clear flag
-
-  // Разрешаем следующее прерывание:
-  enc28j60_bfs(EIE,EIE_INTIE); // устанавливаем INTIE бит согласно даташиту
-
-  //led1_off();
-}
-
-
 /// Настройка внешнего прерывания EXIC
 void exint_setup() {
   // Настройка вывода и контроллера EXIC
@@ -145,6 +118,34 @@ void exint_setup() {
 }
 
 
+
+/// Обработчик прерывания DMA.
+/// Завершение процедуры считывания принятого пакета.
+void dma0_hdl() {
+  //led1_on();
+  //RB(DMA_CH0A_b0) &= ~DMA_CH0A_CH0_EN_enable_w; // reset DMA channel
+  enc28j60_release();
+  // Устанавливаем ERXRDPT на адрес следующего пакета - 1 (минус 1 - из-за бага)
+  enc28j60_wcr16(ERXRDPT, (enc28j60_rxrdpt - 1) & ENC28J60_BUFEND);
+
+  // Decrement packet counter
+
+  // Datasheet: After decrementing, if EPKTCNT is ‘0’, the EIR.PKTIF flag will automatically be cleared.
+  // Otherwise, it will remain set, indicating that additional packets are in the receive buffer
+  // and are waiting to be processed.
+  // Attempts to decrement EPKTCNT below 0 are ignored.
+  enc28j60_bfs(ECON2, ECON2_PKTDEC); // Сбрасывает флаг PKTIF, если счетчик ==0
+
+  RB(DMA_CH0A_b3) |= DMA_CH0A_CH0_TC2F_mask_b3; // clear flag
+
+  // Разрешаем следующее прерывание:
+  enc28j60_bfs(EIE,EIE_INTIE); // устанавливаем INTIE бит согласно даташиту
+
+  //led1_off();
+}
+
+
+/// Настройки DMA
 void spi_test_dma() {
   dma_init();
   dma_setup(0,0);
@@ -155,6 +156,21 @@ void spi_test_dma() {
   dma_setup_memdst(0,eth_frame);
   //RB(SPI0_CR0_b3) |= SPI_CR0_DMA_RXEN_enable_b3;
   // SPI_CR0_DMA_MDS_enable_b3
+
+
+  ////dma_setup_int(0,DMA_CH0A_CH0_CIE_enable_b2); // включаем прерывание по завершению передачи
+  RB(DMA_INT_b0) = DMA_INT_IEA_enable_b0;
+  RB(DMA_CH0A_b2) = DMA_CH0A_CH0_CIE_enable_b2;
+  SVC2(SVC_HANDLER_SET,8,dma0_hdl);
+  RW(CPU_ISER_w) = (1 << 8); // SETENA 8
+}
+
+
+void debug1() {
+  uint8_t i;
+  for (i=0x20; i<=0x3c; i+=4) {
+    debug32hex(i,RW(DMA_Base+i));
+  }
 }
 
 
@@ -172,11 +188,20 @@ void spi_test_master() {
   char s[8];
   //pin_test(8);
 
-  // Настройка выводов:
+  asm("push {r4}\n");
+  //asm("mov r0,r0\n");
+  //asm("mov r0,r0\n");
   HW_SPI0_SETMISO;  HW_SPI0_SETMOSI;  HW_SPI0_SETSCK;  HW_SPI0_SETNSS;
+  //delay(1);
+  __NOP();
+
+
+  // Настройка выводов:
+
 
   // Инициализация, настройка тактирования:
   spi_init();
+  //__NOP();
 
   // Настройка режима работы
   spi_setup_mode(
@@ -196,6 +221,7 @@ void spi_test_master() {
   uart_puts(PORT,"PHID2:  ",UART_NEWLINE_NONE); strUint16hex(s,enc28j60_rcr(PHID2)); uart_puts(PORT,s,UART_NEWLINE_CRLF);
   uart_puts(PORT,"ERXFCON:",UART_NEWLINE_NONE); strUint16hex(s,enc28j60_rcr(ERXFCON)); uart_puts(PORT,s,UART_NEWLINE_CRLF);
   uart_puts(PORT,"MAC: ",UART_NEWLINE_NONE); eth_get_addr(s); debugbuf(s,6);
+  //uart_puts(PORT,"MAC: ",UART_NEWLINE_NONE); eth_get_addr(s); debugbuf(s,6);
 
   enc28j60_release();
 
@@ -207,34 +233,42 @@ void spi_test_master() {
 
   spi_test_dma();
 
-
-  // Работает, если обращаться к переменной eth_frame_len, иначе - не работает! TODO
+  while (1) {
+    //debug16hex(RH(DMA_CH0CNT_h0));
+    debug16hex(RH(DMA_CH0DCA_h0));
+    f = RB(DMA_CH0A_b3);
+//    if (f & DMA_CH0A_CH0_ERR2F_happened_b3) {
+//      uart_put(PORT,(UART_NEWLINE_CRLF << 8) | 'E');
+//      break;
+//    }
+//    if (f & DMA_CH0A_CH0_TC2F_happened_b3) {
+//      led1_on();
+//      dma0_hdl();
+//      led1_off();
+//
+//      //debug1();
+//
+//      //debugbuf(eth_frame,14);
+//      //
+//      //led2_flash();
+//      //debugbuf(eth_frame,14);
+//      //debugbuf(eth_frame,eth_frame_len);
+//      //debug('L',eth_frame_len);
+//      //delay_ms(eth_frame_len);
+//      //led1_off();
+//    }
+    delay_ms(100);
+  }
 
   while (1) {
-    f = RB(DMA_CH0A_b3);
-    if (f & DMA_CH0A_CH0_ERR2F_happened_b3) {
-      uart_put(PORT,(UART_NEWLINE_CRLF << 8) | 'E');
-      break;
-    }
-    if (f & DMA_CH0A_CH0_TC2F_happened_b3) {
-      led1_on();
-      dma0_hdl();
-      led1_off();
-
-      //debugbuf(eth_frame,14);
-      //
-      //led2_flash();
-      //debugbuf(eth_frame,14);
-      //debugbuf(eth_frame,eth_frame_len);
-      //debug('L',eth_frame_len);
-      //delay_ms(eth_frame_len);
-      //led1_off();
-    }
+    //debug1();
+    debug16hex(RH(DMA_CH0CNT_h0));
+    //delay_ms(10);
   }
 
   //led2_flash();
-  debugbuf(eth_frame,14);
-  debug('L',eth_frame_len);
+  //debugbuf(eth_frame,14);
+  //debug('L',eth_frame_len);
     //enc28j60_bfs(ECON2, ECON2_PKTDEC);
 
 //  n=eth_recvpkt(eth_frame,ETH_FRAME_MAXSIZE);

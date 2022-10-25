@@ -120,6 +120,16 @@ void EXINT3_IRQHandler() {
 }
 
 __attribute__ ((interrupt))
+void COMP_IRQHandler() {
+  if (hdlr[7]) hdlr[7]();
+}
+
+__attribute__ ((interrupt))
+void DMA_IRQHandler() {
+  if (hdlr[8]) hdlr[8]();
+}
+
+__attribute__ ((interrupt))
 void ADC_IRQHandler() {
   if (hdlr[10]) hdlr[10]();
 }
@@ -170,6 +180,11 @@ void URT123_IRQHandler() {
 }
 
 __attribute__ ((interrupt))
+void URT4x_IRQHandler() {
+  if (hdlr[22]) hdlr[22]();
+}
+
+__attribute__ ((interrupt))
 void SPI0_IRQHandler() {
   if (hdlr[24]) hdlr[24]();
 }
@@ -182,4 +197,14 @@ void I2C0_IRQHandler() {
 __attribute__ ((interrupt))
 void I2C1_IRQHandler() {
   if (hdlr[29]) hdlr[29]();
+}
+
+__attribute__ ((interrupt))
+void USB_IRQHandler() {
+  if (hdlr[30]) hdlr[30]();
+}
+
+__attribute__ ((interrupt))
+void APX_IRQHandler() {
+  if (hdlr[31]) hdlr[31]();
 }
