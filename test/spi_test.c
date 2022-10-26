@@ -12,11 +12,36 @@
 #include "dma.h"
 
 
-/// Local MAC address
+/// Локальный MAC адрес
 const uint8_t addr[6]={0x02,0xEE,0x10,0x00,0x00,0x01};
 
-/// Destination MAC address
+/// Целевой MAC адрес
 const uint8_t dest[6]={0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
+
+
+
+// **** Имитация работы ARP протокола: ****
+
+/// Локальный IPv4 адрес 192.168.0.177
+const uint32_t ipaddr=0xC0A800B1;
+
+/// Возвращает IPv4 адрес из входящего пакета ARP запроса.
+/// Если пакет не содержит ARP-запрос, возвращает 0.
+uint32_t arp_get_ipaddr(const uint8_t* pkt) {
+  if (
+      (*(uint16_t*) (pkt+12) == 0x0608) // проверяем код протокола 0x0806 (big endian)
+      && (*(uint16_t*) (pkt+20) == 0x0100)) // проверяем код операции (1 - запрос, 2 - ответ) (big endian)
+  {
+    return __REV(*(uint32_t*)(pkt+38));
+  }
+  return 0;
+}
+
+/// Формирует пакет с ARP-запросом.
+void arp_gen_answer(uint8_t* pkt) {
+}
+
+// **** **** **** ****
 
 
 void pin_test(uint8_t p) {
@@ -122,6 +147,8 @@ void exint_setup() {
 /// Обработчик прерывания DMA.
 /// Завершение процедуры считывания принятого пакета.
 void dma0_hdl() {
+  uint32_t a;
+  uint32_t s; // CRC32
   led1_on();
   //RB(DMA_CH0A_b0) &= ~DMA_CH0A_CH0_EN_enable_w; // reset DMA channel
   enc28j60_release();
@@ -141,8 +168,17 @@ void dma0_hdl() {
   debugbuf(eth_frame,12);
 
   eth_frame_len-=4;
-  debugbuf(eth_frame+eth_frame_len,4);
-  debug32hex('S',crc32_block8(eth_frame,eth_frame_len));
+/*
+  //debugbuf(eth_frame+eth_frame_len,4);
+  s=*(uint32_t*)(eth_frame+eth_frame_len); // CRC32 - little endian!
+  debug32hex('S',s);
+  debug32hex('C',crc32_block8(eth_frame,eth_frame_len));
+*/
+  //if (arp_get_ipaddr(eth_frame) == ipaddr ) {
+  if (a=arp_get_ipaddr(eth_frame)) {
+    debug32hex('A',a);
+    if (a==ipaddr) uart_puts(PORT,"ARP",UART_NEWLINE_CRLF);
+  }
 
   RB(DMA_CH0A_b3) |= DMA_CH0A_CH0_TC2F_mask_b3; // clear flag
 
