@@ -1,6 +1,6 @@
 #include <stdint.h>
 
-#define APP_ORIGIN      0x00001000
+//#define APP_ORIGIN      0x00001000
 //#define APP_ORIGIN      0x20000000
 #define APP_SIGNATURE   0x46c046c0
 

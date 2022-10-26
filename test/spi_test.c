@@ -67,7 +67,7 @@ void exint0_hdl_dma() {
 
     // Пакет принят успешно?
     if (status & 0x0080) { //success
-      rxlen -= 4; // Выбрасываем контрольную сумму
+      //rxlen -= 4; // Выбрасываем контрольную сумму
       //debug('R',rxlen);
       //debug16hex(rxlen);
       // Читаем пакет в буфер (если буфера не хватает, пакет обрезается)
@@ -119,7 +119,6 @@ void exint_setup() {
 }
 
 
-
 /// Обработчик прерывания DMA.
 /// Завершение процедуры считывания принятого пакета.
 void dma0_hdl() {
@@ -139,7 +138,11 @@ void dma0_hdl() {
 
   //debugbuf(eth_frame,eth_frame_len);
   debug('L',eth_frame_len);
-  debugbuf(eth_frame,14);
+  debugbuf(eth_frame,12);
+
+  eth_frame_len-=4;
+  debugbuf(eth_frame+eth_frame_len,4);
+  debug32hex('S',crc32_block8(eth_frame,eth_frame_len));
 
   RB(DMA_CH0A_b3) |= DMA_CH0A_CH0_TC2F_mask_b3; // clear flag
 

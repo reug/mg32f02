@@ -81,11 +81,23 @@ project "svr32"
   linkoptions { "-Wl,--gc-sections"}
   linkoptions {"-T mg32f02a032_svr.ld"}
 
-project "svr64"
+project "svr64_ram"
   kind "ConsoleApp"
   language "C"
   setup_paths ("MG32F02A128")
   defines {"HWCF_A064"}
+  defines {"APP_ORIGIN=0x20000000"}
+  files {"src/init.c", "src/startup.c", "src/main.c", "src/svr.c", "src/ulib.c"}
+  linkoptions {"-nostdlib"}
+  linkoptions { "-Wl,--gc-sections"}
+  linkoptions {"-T mg32f02a064_svr.ld"}
+
+project "svr64_rom"
+  kind "ConsoleApp"
+  language "C"
+  setup_paths ("MG32F02A128")
+  defines {"HWCF_A064"}
+  defines {"APP_ORIGIN=0x00001000"}
   files {"src/init.c", "src/startup.c", "src/main.c", "src/svr.c", "src/ulib.c"}
   linkoptions {"-nostdlib"}
   linkoptions { "-Wl,--gc-sections"}
@@ -96,6 +108,7 @@ project "app"
   language "C"
   setup_paths ("MG32F02A128")
   defines {"HWCF_A064"}
+  defines {"APP_ORIGIN=0x20000000"}
   defines {"I2C_DEBUG"}
   --files {"src/app.c", "src/utils.c", "test/adc_test.c", "src/uart.c", "src/adc.c", "src/cmp.c", "src/init.c", "src/ulib.c"}
   --files {"src/app.c", "src/utils.c", "src/uart.c", "test/st_rtc_test.c", "src/rtc.c", "src/init.c", "src/ulib.c"}
@@ -107,18 +120,19 @@ project "app"
   files {"src/app.c", "src/utils.c", "src/uart.c", "test/i2c_test.c", "src/i2c.c", "src/init.c", "src/ulib.c", MID_SRC.."MG32x02z_GPL_MID.c", "ic/ds3231.c"}
   linkoptions {"-nostdlib"}
   linkoptions { "-Wl,--gc-sections"}
-  linkoptions {"-T mg32f02a064_app.ld"}
+  linkoptions {"-T mg32f02a064_app_ram.ld"}
 
 project "clock"
   kind "ConsoleApp"
   language "C"
   setup_paths ("MG32F02A128")
   defines {"HWCF_A064"}
+  defines {"APP_ORIGIN=0x20000000"}
   defines {"I2C_DEBUG"}
   files {"src/app_clock.c", "src/utils.c", "src/uart.c", "test/i2c_test.c", "src/init.c", "src/ulib.c", MID_SRC.."MG32x02z_GPL_MID.c", "ic/tm1637.c", "ic/ds3231.c", "src/i2c.c"}
   linkoptions {"-nostdlib"}
   linkoptions { "-Wl,--gc-sections"}
-  linkoptions {"-T mg32f02a064_app.ld"}
+  linkoptions {"-T mg32f02a064_app_ram.ld"}
 
 project "slave"
   kind "ConsoleApp"
@@ -137,8 +151,9 @@ project "spim"
   language "C"
   setup_paths ("MG32F02A128")
   defines {"HWCF_A064"}
+  defines {"APP_ORIGIN=0x00001000"}
   defines {"SPI_DEBUG"}
   files {"src/app.c", "src/utils.c", "src/uart.c", "test/spi_test.c", "src/spi.c", "src/init.c", "src/ulib.c", MID_SRC.."MG32x02z_GPL_MID.c", "ic/enc28j60.c", "src/ethernet.c", "src/dma.c"}
   linkoptions {"-nostdlib"}
   linkoptions { "-Wl,--gc-sections"}
-  linkoptions {"-T mg32f02a064_app.ld"}
+  linkoptions {"-T mg32f02a064_app_rom.ld"}

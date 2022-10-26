@@ -1,5 +1,7 @@
 #include "ulib.h"
 #include "cmsis_gcc.h"
+#include "core.h"
+#include "MG32x02z_GPL.h"
 #include "MG32x02z_GPL_MID.h"
 
 
@@ -181,4 +183,107 @@ uint32_t divu32(uint32_t Dividend, uint32_t Divisor) {
 
 uint32_t modu32(uint32_t Dividend, uint32_t Divisor) {
   return MID_GPL_HDIV_UMOD(Dividend,Divisor);
+}
+
+/*
+void crc32_init(uint32_t val) {
+  RB(GPL_CR1_b0)=0;
+  RW(GPL_CRCINIT_w)=val;
+  RW(GPL_DIN_w)=0;
+  //RB(GPL_CR0_b0)= GPL_CR0_IN_INV_enable_b0; // GPL_CR0_BEND_EN_enable_b0;
+  //RB(GPL_CR1_b0)= GPL_CR1_CRC_DSIZE_8bit_b0 | GPL_CR1_CRC_MDS_crc32_b0 | GPL_CR1_CRC_EN_enable_b0;
+  RB(GPL_CR1_b0)= GPL_CR1_CRC_DSIZE_8bit_b0 | GPL_CR1_CRC_MDS_crc32_b0 | GPL_CR1_CRC_EN_enable_b0;
+  //RB(GPL_CR1_b0)= GPL_CR1_CRC_BREV_32bit_b0 | GPL_CR1_CRC_DSIZE_8bit_b0 | GPL_CR1_CRC_MDS_crc32_b0 | GPL_CR1_CRC_EN_enable_b0;
+  //RB(GPL_CR1_b0)= GPL_CR1_CRC_DSIZE_32bit_b0 | GPL_CR1_CRC_MDS_crc32_b0 | GPL_CR1_CRC_EN_enable_b0;
+}
+*/
+
+//uint32_t crc32_calc(uint8_t val) {
+//  RB(GPL_DIN_b0) = val;
+//  return RW(GPL_DIN_w);
+//}
+
+uint32_t crc32_block8(const void* buf, uint32_t len) {
+  uint32_t i;
+  RB(GPL_CR1_b0)=0; // сброс модуля - выполнять обязательно!
+  RB(GPL_CR0_b0)=GPL_CR0_BREV_MDS_8bit_b0; // перестановка битов в байте
+  RW(GPL_CRCINIT_w)=0xffffffff; // начальное значение
+  RB(GPL_CR1_b0)=
+    GPL_CR1_CRC_BREV_32bit_b0 | // перестановка битов в 32-битной сумме
+    GPL_CR1_CRC_DSIZE_8bit_b0 | // размер входных данных - 1 байт
+    GPL_CR1_CRC_MDS_crc32_b0 |  // режим CRC32
+    GPL_CR1_CRC_EN_enable_b0;   // включаем модуль
+  for (i=0; i<len; i++) {
+    RB(GPL_DIN_b0) = ((uint8_t*)buf)[i];
+  }
+  return RW(GPL_DOUT_w) ^ 0xffffffff; // по стандарту Ethernet нужно выполнить инверсию
+}
+
+
+uint32_t crc32_block8_hw(const void* buf, uint32_t len) {
+  uint32_t i;
+  RB(GPL_CR1_b0)=0;
+  RW(GPL_CRCINIT_w)=0xffffffff;
+  RW(GPL_DIN_w)=0;
+  RB(GPL_CR1_b0)= GPL_CR1_CRC_DSIZE_8bit_b0 | GPL_CR1_CRC_MDS_crc32_b0 | GPL_CR1_CRC_EN_enable_b0;
+  for (i=0; i<len; i++) {
+    RB(GPL_DIN_b0) = ((uint8_t*)buf)[i];
+    //__NOP();
+    //__NOP();
+  }
+  return RW(GPL_DOUT_w);
+}
+
+
+uint32_t crc32_block32_hw(const uint32_t* buf, uint32_t len) {
+  uint32_t i;
+  //RB(GPL_CR0_b0)= GPL_CR0_BREV_MDS_32bit_b0 | GPL_CR0_BEND_EN_enable_b0;
+  RB(GPL_CR0_b0)= GPL_CR0_BEND_EN_enable_b0;
+  RB(GPL_CR1_b0)=0;
+  RW(GPL_CRCINIT_w)=0xffffffff;
+  RW(GPL_DIN_w)=0;
+  //RB(GPL_CR1_b0)= GPL_CR1_CRC_DSIZE_32bit_b0 | GPL_CR1_CRC_MDS_crc32_b0 | GPL_CR1_CRC_EN_enable_b0;
+  RB(GPL_CR1_b0)= GPL_CR1_CRC_DSIZE_32bit_b0 | GPL_CR1_CRC_MDS_crc32_b0 | GPL_CR1_CRC_EN_enable_b0;
+  len >>= 2;
+  for (i=0; i<len; i++) {
+    RW(GPL_DIN_w) = buf[i];
+    __NOP(); __NOP();// __NOP(); __NOP();
+  }
+  return RW(GPL_DOUT_w);
+}
+
+
+uint32_t crc32_block32_sw_le(const uint32_t* buf, uint32_t len) {
+  uint32_t i=0, j=0, c=0xFFFFFFFF;
+  len >>= 2;
+  for (i=0; i<len; i++) {
+    c ^= buf[i];
+    for (j=0; j<32; j++)
+      c = c & 0x80000000 ? (c << 1) ^ 0x04C11DB7 : c << 1;
+  }
+  return c;
+}
+
+
+uint32_t crc32_block32_sw_be(const uint32_t* buf, uint32_t len) {
+  uint32_t i=0, j=0, c=0xFFFFFFFF;
+  len >>= 2;
+  for (i=0; i<len; i++) {
+    c ^= __REV(buf[i]);
+    for (j=0; j<32; j++)
+      c = c & 0x80000000 ? (c << 1) ^ 0x04C11DB7 : c << 1;
+  }
+  return c  ^ 0xFFFFFFFF;
+}
+
+
+// https://www.csie.ntu.edu.tw/~cyy/courses/introCS/13fall/assignments/proj4/index.html
+uint32_t crc32_block32_sw2(const uint8_t* buf, uint32_t len) {
+  uint32_t i=0, j=0, c=0xFFFFFFFF;
+  for (i=0; i<len; i++) {
+    c ^= (uint32_t)buf[i];
+    for (j=0; j<8; j++)
+      c = c & 0x01 ? (c >> 1) ^ 0xEDB88320 : c >> 1;
+  }
+  return c ^ 0xFFFFFFFF;
 }

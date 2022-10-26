@@ -53,4 +53,20 @@ int32_t mods32(int32_t Dividend, int32_t Divisor);
 uint32_t divu32(uint32_t Dividend, uint32_t Divisor);
 uint32_t modu32(uint32_t Dividend, uint32_t Divisor);
 
+/// Вычисление CRC32 (IEEE 802.3, polynomial 0x04C11DB7, reversed polynom 0xEDB88320)
+uint32_t crc32_block8(const void* buf, uint32_t len);
+
+/// CRC32 block (byte)
+/// Не совпадает с Ethernet CRC32 !
+uint32_t crc32_block8_hw(const void* buf, uint32_t len);
+
+/// CRC32 block (word)
+/// Не совпадает с Ethernet CRC32 !
+uint32_t crc32_block32_hw(const uint32_t* buf, uint32_t len);
+
+/// Software CRC32
+uint32_t crc32_block32_sw_le(const uint32_t* buf, uint32_t len);
+uint32_t crc32_block32_sw_be(const uint32_t* buf, uint32_t len);
+uint32_t crc32_block32_sw2(const uint8_t* buf, uint32_t len);
+
 #endif

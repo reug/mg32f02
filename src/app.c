@@ -55,7 +55,7 @@ void app() {
   //setup_ihrco();
   if (setup_xosc()) led1_flash(); else led2_flash();
 
-  gpl_init(); // Включаем модуль GPL для целочисленного аппаратного деления
+  gpl_init(); // Включаем модуль GPL для целочисленного аппаратного деления и CRC
 
   // Настройка выводов URT0:
   //RH(PB_CR8_h0) = (3 << 12) | 2; // PB8 -> URT0_TX, push pull output
@@ -92,6 +92,8 @@ void app() {
   //i2c_test_master_wN(4);
   //tm1637_test();
   spi_test_master();
+
+
 
 /*
   // NCO test
