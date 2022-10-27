@@ -89,7 +89,7 @@ void exint0_hdl_nodma() {
 /// Инициализация процедуры считывания принятого пакета.
 void exint0_hdl_dma() {
   uint16_t rxlen, status;
-  led1_on();
+  //led1_on();
 
   enc28j60_bfc(EIE,EIE_INTIE); // сбрасываем INTIE бит согласно даташиту
 
@@ -111,7 +111,7 @@ void exint0_hdl_dma() {
 
   // Функции enc28j60_* далее применять нельзя до завершения операции DMA !!!
   RH(EXIC_PA_PF_h0) = HW_EXINT0_MASK; // сбрасываем флаг (EXIC_PA_PF_PA12_PF_mask_h0)
-  led1_off();
+  //led1_off();
 }
 
 
@@ -136,7 +136,7 @@ void exint_setup() {
 /// Обработчик прерывания DMA.
 void dma_hdl() {
   uint32_t f;
-  led1_on();
+  //led1_on();
 
   f = RW(DMA_STA_w);
   if (f & DMA_STA_CH0_TCF_happened_w) {
@@ -177,7 +177,7 @@ void dma_hdl() {
     state |= ST_PKTSENT;
   }
 
-  led1_off();
+  //led1_off();
 
 }
 
@@ -227,7 +227,7 @@ void spi_dma_start_rx(uint32_t n) {
 /// Запуск процедуры отправки данных на канале 1, n - число байт
 void spi_dma_start_tx(uint32_t n) {
   uint8_t cbyte=0; // управляющий байт
-
+led1_on();
   while(enc28j60_rcr(ECON1) & ECON1_TXRTS) {
     // TXRTS may not clear - ENC28J60 bug. We must reset
     // transmit logic in cause of Tx error
@@ -349,7 +349,7 @@ void spi_test_master() {
       enc28j60_wcr16(ETXST, ENC28J60_TXSTART);
       enc28j60_wcr16(ETXND, ENC28J60_TXSTART + eth_frame_len);
       enc28j60_bfs(ECON1, ECON1_TXRTS); // Даем саму команду
-
+  led1_off();
       state &= ~ST_PKTSENT;
       __enable_irq();
     }
