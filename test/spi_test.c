@@ -18,6 +18,14 @@ const uint8_t addr[6]={0x02,0xEE,0x10,0x00,0x00,0x01};
 /// Целевой MAC адрес
 const uint8_t dest[6]={0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
 
+/// Общие флаги событий:
+volatile uint32_t state;
+
+#define ST_PKTRECV 0x00000001
+#define ST_PKTSENT 0x00000002
+
+
+
 
 
 // **** Имитация работы ARP протокола: ****
@@ -37,8 +45,15 @@ uint32_t arp_get_ipaddr(const uint8_t* pkt) {
   return 0;
 }
 
-/// Формирует пакет с ARP-запросом.
-void arp_gen_answer(uint8_t* pkt) {
+/// Формирует пакет с ARP-ответом.
+void arp_gen_reply(uint8_t* pkt) {
+  memcpy(eth_frame+32,eth_frame+6,6); // target MAC
+  memcpy(eth_frame+38,eth_frame+28,4); // target IP
+  memcpy(eth_frame,eth_frame+6,6); // Dest ADDR
+  eth_setframe_addr(addr); // Src ADDR
+  eth_frame[21]=2; // reply opcode
+  memcpy(eth_frame+22,addr,6); // < sender MAC
+  *(uint32_t*)(eth_frame+28)=__REV(ipaddr); // < sender IP
 }
 
 // **** **** **** ****
@@ -76,51 +91,25 @@ void exint0_hdl_dma() {
   uint16_t rxlen, status;
   led1_on();
 
-  //RB(DMA_CH0A_b0) &= ~DMA_CH0A_CH0_EN_enable_w; // reset DMA channel
-
   enc28j60_bfc(EIE,EIE_INTIE); // сбрасываем INTIE бит согласно даташиту
 
-  // Есть ли принятые пакеты?
-  //if (enc28j60_rcr(EPKTCNT)) {
+  // Считываем заголовок:
+  enc28j60_wcr16(ERDPT, enc28j60_rxrdpt); // Устанавливаем начальный адрес в буфере для считывания
+  enc28j60_read_buffer((void*)&enc28j60_rxrdpt, sizeof(enc28j60_rxrdpt));
+  enc28j60_read_buffer((void*)&rxlen, sizeof(rxlen));
+  enc28j60_read_buffer((void*)&status, sizeof(status));
 
-    // Считываем заголовок:
-    enc28j60_wcr16(ERDPT, enc28j60_rxrdpt); // Устанавливаем начальный адрес в буфере для считывания
-
-    enc28j60_read_buffer((void*)&enc28j60_rxrdpt, sizeof(enc28j60_rxrdpt));
-    enc28j60_read_buffer((void*)&rxlen, sizeof(rxlen));
-    enc28j60_read_buffer((void*)&status, sizeof(status));
-
-    // Пакет принят успешно?
-    if (status & 0x0080) { //success
-      //rxlen -= 4; // Выбрасываем контрольную сумму
-      //debug('R',rxlen);
-      //debug16hex(rxlen);
-      // Читаем пакет в буфер (если буфера не хватает, пакет обрезается)
-      eth_frame_len = (rxlen > ETH_FRAME_MAXSIZE) ? ETH_FRAME_MAXSIZE : rxlen;
-
-      ////enc28j60_bfs(ECON2, ECON2_PKTDEC); // Декремент счетчика сразу, чтобы сбросить флаг PKTIF
-    //}
-  //}
-  //enc28j60_bfc(EIR,EIR_PKTIF); // не помогает
-
-  //if (status & 0x0080) {
-      enc28j60_select();
-      enc28j60_tx(ENC28J60_SPI_RBM);
-
-
-      // Далее необходимо принять из SPI eth_frame_len байт
-      // Запускаем DMA:
-      //RB(DMA_CH0A_b0) |= DMA_CH0A_CH0_EN_enable_w;
-      dma_setup_amount(0,eth_frame_len);
-      //dma_setup_amount(0,2);
-      RB(SPI0_CR0_b3) |= SPI_CR0_DMA_RXEN_enable_b3; // | SPI_CR0_DMA_MDS_enable_b3;
-
-      dma_start(0,DMA_CH0A_CH0_BSIZE_one_b1);
+  // Пакет принят успешно?
+  if (status & 0x0080) { //success
+    // Читаем пакет в буфер (если буфера не хватает, пакет обрезается)
+    eth_frame_len = (rxlen > ETH_FRAME_MAXSIZE) ? ETH_FRAME_MAXSIZE : rxlen;
+    enc28j60_select();
+    enc28j60_tx(ENC28J60_SPI_RBM);
+    // Далее необходимо принять из SPI eth_frame_len байт
+    spi_dma_start_rx(eth_frame_len); // запускаем прием данных кадра через DMA
   }
 
   // Функции enc28j60_* далее применять нельзя до завершения операции DMA !!!
-
-
   RH(EXIC_PA_PF_h0) = HW_EXINT0_MASK; // сбрасываем флаг (EXIC_PA_PF_PA12_PF_mask_h0)
   led1_off();
 }
@@ -145,45 +134,48 @@ void exint_setup() {
 
 
 /// Обработчик прерывания DMA.
-/// Завершение процедуры считывания принятого пакета.
-void dma0_hdl() {
-  uint32_t a;
-  uint32_t s; // CRC32
+void dma_hdl() {
+  uint32_t f;
   led1_on();
-  //RB(DMA_CH0A_b0) &= ~DMA_CH0A_CH0_EN_enable_w; // reset DMA channel
-  enc28j60_release();
-  // Устанавливаем ERXRDPT на адрес следующего пакета - 1 (минус 1 - из-за бага)
-  enc28j60_wcr16(ERXRDPT, (enc28j60_rxrdpt - 1) & ENC28J60_BUFEND);
 
-  // Decrement packet counter
+  f = RW(DMA_STA_w);
+  if (f & DMA_STA_CH0_TCF_happened_w) {
+    // Завершен прием данных по SPI
+    //RB(DMA_CH0A_b0) &= ~DMA_CH0A_CH0_EN_enable_w; // reset DMA channel
+    enc28j60_release();
+    // Устанавливаем ERXRDPT на адрес следующего пакета - 1 (минус 1 - из-за бага)
+    enc28j60_wcr16(ERXRDPT, (enc28j60_rxrdpt - 1) & ENC28J60_BUFEND);
 
-  // Datasheet: After decrementing, if EPKTCNT is ‘0’, the EIR.PKTIF flag will automatically be cleared.
-  // Otherwise, it will remain set, indicating that additional packets are in the receive buffer
-  // and are waiting to be processed.
-  // Attempts to decrement EPKTCNT below 0 are ignored.
-  enc28j60_bfs(ECON2, ECON2_PKTDEC); // Сбрасывает флаг PKTIF, если счетчик ==0
+    // Decrement packet counter
 
-  //debugbuf(eth_frame,eth_frame_len);
-  debug('L',eth_frame_len);
-  debugbuf(eth_frame,12);
+    // Datasheet: After decrementing, if EPKTCNT is ‘0’, the EIR.PKTIF flag will automatically be cleared.
+    // Otherwise, it will remain set, indicating that additional packets are in the receive buffer
+    // and are waiting to be processed.
+    // Attempts to decrement EPKTCNT below 0 are ignored.
+    enc28j60_bfs(ECON2, ECON2_PKTDEC); // Сбрасывает флаг PKTIF, если счетчик ==0
 
-  eth_frame_len-=4;
-/*
-  //debugbuf(eth_frame+eth_frame_len,4);
-  s=*(uint32_t*)(eth_frame+eth_frame_len); // CRC32 - little endian!
-  debug32hex('S',s);
-  debug32hex('C',crc32_block8(eth_frame,eth_frame_len));
-*/
-  //if (arp_get_ipaddr(eth_frame) == ipaddr ) {
-  if (a=arp_get_ipaddr(eth_frame)) {
-    debug32hex('A',a);
-    if (a==ipaddr) uart_puts(PORT,"ARP",UART_NEWLINE_CRLF);
+    RB(DMA_CH0A_b3) |= DMA_CH0A_CH0_TC2F_mask_b3; // clear flag
+
+    // Разрешаем следующее прерывание ENC28J60:
+    enc28j60_bfs(EIE,EIE_INTIE); // устанавливаем INTIE бит согласно даташиту
+
+    __disable_irq(); // опционально: запрещаем все прерывания МК до прочтения флагов state
+    state |= ST_PKTRECV;
   }
 
-  RB(DMA_CH0A_b3) |= DMA_CH0A_CH0_TC2F_mask_b3; // clear flag
+  if (f & DMA_STA_CH1_TCF_happened_w) {
+    // Завершена отправка данных по SPI
 
-  // Разрешаем следующее прерывание:
-  enc28j60_bfs(EIE,EIE_INTIE); // устанавливаем INTIE бит согласно даташиту
+    while (!(RB(SPI0_STA_b0) & SPI_STA_TCF_happened_b0)); // дожидаемся фактического завершения передачи
+
+    enc28j60_release();
+
+    RB(DMA_CH1A_b3) |= DMA_CH0A_CH0_TC2F_mask_b3; // clear flag
+    RB(DMA_CH1A_b0) = 0;
+
+    __disable_irq(); // опционально: запрещаем все прерывания МК до прочтения флагов state
+    state |= ST_PKTSENT;
+  }
 
   led1_off();
 
@@ -191,23 +183,70 @@ void dma0_hdl() {
 
 
 /// Настройки DMA
-void spi_test_dma() {
+void spi_dma_setup() {
   dma_init();
+
+  // Настройка канала 0 для приема
   dma_setup(0,0);
   dma_setup_sd(0,
     DMA_SPI0_RX | // источник
     (DMA_MEM_Write << 8) // приемник
   );
   dma_setup_memdst(0,eth_frame);
-  //RB(SPI0_CR0_b3) |= SPI_CR0_DMA_RXEN_enable_b3;
+
+  // Настройка канала 1 для отправки
+  dma_setup(1,0);
+  dma_setup_sd(1,
+    DMA_MEM_Read | // источник
+    (DMA_SPI0_TX << 8) // приемник
+  );
+  dma_setup_memsrc(1,eth_frame);
+
+  //RB(SPI0_CR0_b3) |= SPI_CR0_DMA_TXEN_enable_b3 | SPI_CR0_DMA_RXEN_enable_b3; // здесь нельзя это включать, т.к. сразу заблокируются флаги
   // SPI_CR0_DMA_MDS_enable_b3
-
-
   //dma_setup_int(0,DMA_CH0A_CH0_CIE_enable_b2); // включаем прерывание по завершению передачи
-  RB(DMA_INT_b0) = DMA_INT_IEA_enable_b0;
   RB(DMA_CH0A_b2) = DMA_CH0A_CH0_CIE_enable_b2;
-  SVC2(SVC_HANDLER_SET,8,dma0_hdl);
+  RB(DMA_CH1A_b2) = DMA_CH1A_CH1_CIE_enable_b2;
+
+  RB(DMA_INT_b0) = DMA_INT_IEA_enable_b0;
+  SVC2(SVC_HANDLER_SET,8,dma_hdl);
   RW(CPU_ISER_w) = (1 << 8); // SETENA 8
+}
+
+
+/// Запуск процедуры приема данных на канале 0, n - число байт
+void spi_dma_start_rx(uint32_t n) {
+  //RB(DMA_CH0A_b0) |= DMA_CH0A_CH0_EN_enable_w;
+  RB(SPI0_CR0_b3) |= SPI_CR0_DMA_RXEN_enable_b3;
+  dma_setup_amount(0,n);
+  //dma_setup_amount(0,2);
+  dma_start(0,DMA_CH0A_CH0_BSIZE_one_b1);
+}
+
+
+/// Запуск процедуры отправки данных на канале 1, n - число байт
+void spi_dma_start_tx(uint32_t n) {
+  uint8_t cbyte=0; // управляющий байт
+
+  while(enc28j60_rcr(ECON1) & ECON1_TXRTS) {
+    // TXRTS may not clear - ENC28J60 bug. We must reset
+    // transmit logic in cause of Tx error
+    if(enc28j60_rcr(EIR) & EIR_TXERIF) {
+      enc28j60_bfs(ECON1, ECON1_TXRST);
+      enc28j60_bfc(ECON1, ECON1_TXRST);
+    }
+  }
+
+  enc28j60_wcr16(EWRPT, ENC28J60_TXSTART);
+  enc28j60_write_buffer(&cbyte, 1);
+
+  enc28j60_select();
+  enc28j60_tx(ENC28J60_SPI_WBM);
+
+  eth_frame_len=n;
+  RB(SPI0_CR0_b3) |= SPI_CR0_DMA_TXEN_enable_b3;
+  dma_setup_amount(1,n);
+  dma_start(1,DMA_CH0A_CH0_BSIZE_one_b1);
 }
 
 
@@ -227,13 +266,14 @@ uint32_t bufn;        ///< размер данных на отправку
 
 
 void spi_test_master() {
-  uint8_t f;
-  uint16_t n;
-  uint32_t d;
+  //uint16_t n;
+  //uint32_t d;
   char s[8];
+  uint32_t a; // IP address
+  uint32_t c; // CRC32
+
+  state=0;
   //pin_test(8);
-
-
   // Настройка выводов:
   HW_SPI0_SETMISO;  HW_SPI0_SETMOSI;  HW_SPI0_SETSCK;  HW_SPI0_SETNSS;
 
@@ -258,62 +298,57 @@ void spi_test_master() {
   uart_puts(PORT,"PHID2:  ",UART_NEWLINE_NONE); strUint16hex(s,enc28j60_rcr(PHID2)); uart_puts(PORT,s,UART_NEWLINE_CRLF);
   uart_puts(PORT,"ERXFCON:",UART_NEWLINE_NONE); strUint16hex(s,enc28j60_rcr(ERXFCON)); uart_puts(PORT,s,UART_NEWLINE_CRLF);
   uart_puts(PORT,"MAC: ",UART_NEWLINE_NONE); eth_get_addr(s); debugbuf(s,6);
-  //uart_puts(PORT,"MAC: ",UART_NEWLINE_NONE); eth_get_addr(s); debugbuf(s,6);
 
   enc28j60_release();
 
   exint_setup();
   eth_setup_int();
-  //eth_clear_int();
-
-
-  spi_test_dma();
+  // Настройка всех каналов DMA ( 0 - прием, 1 - отправка)
+  spi_dma_setup();
 
   while (1) {
-    //debug16hex(RH(DMA_CH0CNT_h0));
-    //debug16hex(RH(DMA_CH0DCA_h0));
-    //f = RB(DMA_CH0A_b3);
-//    if (f & DMA_CH0A_CH0_ERR2F_happened_b3) {
-//      uart_put(PORT,(UART_NEWLINE_CRLF << 8) | 'E');
-//      break;
-//    }
-//    if (f & DMA_CH0A_CH0_TC2F_happened_b3) {
-//      led1_on();
-//      dma0_hdl();
-//      led1_off();
+    if (state & ST_PKTRECV) {
+      // Принят новый кадр
+      debug('R',eth_frame_len);
+      debugbuf(eth_frame,14);
+      eth_frame_len-=4;
+      //debugbuf(eth_frame+eth_frame_len,4);
+//      c=*(uint32_t*)(eth_frame+eth_frame_len); // CRC32 - little endian!
+//      debug32hex('C',c);
+//      debug32hex('S',crc32_block8(eth_frame,eth_frame_len));
 //
-//      //debug1();
-//
-//      //debugbuf(eth_frame,14);
-//      //
-//      //led2_flash();
-//      //debugbuf(eth_frame,14);
-//      //debugbuf(eth_frame,eth_frame_len);
-//      //debug('L',eth_frame_len);
-//      //delay_ms(eth_frame_len);
-//      //led1_off();
-//    }
-    delay_ms(100);
+      if (a=arp_get_ipaddr(eth_frame)) {
+        debug32hex('A',a);
+        if (a==ipaddr) {
+          uart_puts(PORT,"> ARP_REPLY",UART_NEWLINE_CRLF);
+          arp_gen_reply(eth_frame);
+          spi_dma_start_tx(42);
+
+        }
+      }
+      state &= ~ST_PKTRECV;
+      __enable_irq();
+    }
+
+    if (state & ST_PKTSENT) {
+      uart_puts(PORT,"T PKTSENT",UART_NEWLINE_CRLF);
+      // Возвращаем работу флагов SPI:
+      RB(SPI0_CR0_b3) = 0; // возвращаем работу флагов SPI (отключаем DMA_TXEN и DMA_RXEN)
+
+      // TODO
+      // Пока восстановить работу флагов SPI после завершения операции DMA (по отправке данных в SPI) не удалось...
+
+
+      // Буфер в ENC28J60 записан, теперь даем команду на отправку кадра
+      // Устанавливаем границы кадра на отправку в буфере ENC28J60:
+      enc28j60_wcr16(ETXST, ENC28J60_TXSTART);
+      enc28j60_wcr16(ETXND, ENC28J60_TXSTART + eth_frame_len);
+      enc28j60_bfs(ECON1, ECON1_TXRTS); // Даем саму команду
+
+      state &= ~ST_PKTSENT;
+      __enable_irq();
+    }
+    //delay_ms(100);
   }
-
-//  while (1) {
-//    //debug1();
-//    debug16hex(RH(DMA_CH0CNT_h0));
-//    //delay_ms(10);
-//  }
-
-  //led2_flash();
-  //debugbuf(eth_frame,14);
-  //debug('L',eth_frame_len);
-    //enc28j60_bfs(ECON2, ECON2_PKTDEC);
-
-//  n=eth_recvpkt(eth_frame,ETH_FRAME_MAXSIZE);
-//  if (n) {
-//    debug('L',n);
-//    debugbuf(eth_frame,n);
-//  }
-//  eth_clear_int();
-
-
 }
 

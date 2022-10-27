@@ -115,6 +115,9 @@
 				<Option output="megawin" prefix_auto="1" extension_auto="1" />
 				<Option type="0" />
 				<Option compiler="arm-elf-gcc" />
+				<ExtraCommands>
+					<Add after="./run_spim" />
+				</ExtraCommands>
 				<MakeCommands>
 					<Build command="make spim" />
 					<CompileFile command="make -f spim.make $file" />
