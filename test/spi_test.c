@@ -171,7 +171,7 @@ void dma_hdl() {
     enc28j60_release();
 
     RB(DMA_CH1A_b3) |= DMA_CH0A_CH0_TC2F_mask_b3; // clear flag
-    RB(DMA_CH1A_b0) = 0;
+    //RB(DMA_CH1A_b0) = 0;
 
     __disable_irq(); // опционально: запрещаем все прерывания МК до прочтения флагов state
     state |= ST_PKTSENT;
@@ -332,11 +332,16 @@ void spi_test_master() {
 
     if (state & ST_PKTSENT) {
       uart_puts(PORT,"T PKTSENT",UART_NEWLINE_CRLF);
-      // Возвращаем работу флагов SPI:
-      RB(SPI0_CR0_b3) = 0; // возвращаем работу флагов SPI (отключаем DMA_TXEN и DMA_RXEN)
 
+      // Возвращаем работу флагов SPI:
+      // Это не помогает:
+      //RB(SPI0_CR0_b3) = 0; // возвращаем работу флагов SPI (отключаем DMA_TXEN и DMA_RXEN)
+      // Вот это помогает:
+      RB(SPI0_CR0_b0) &= 0xFE; // reset SPI0
+      RB(SPI0_CR0_b0) |= 1; // reset SPI0
       // TODO
-      // Пока восстановить работу флагов SPI после завершения операции DMA (по отправке данных в SPI) не удалось...
+      // Как-то иначе пока не удалось восстановить работу флагов SPI
+      // после завершения операции DMA (по отправке данных в SPI).
 
 
       // Буфер в ENC28J60 записан, теперь даем команду на отправку кадра
