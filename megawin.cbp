@@ -127,6 +127,22 @@
 					<SilentBuild command="make spim &gt; $(CMD_NULL)" />
 				</MakeCommands>
 			</Target>
+			<Target title="spis">
+				<Option output="megawin" prefix_auto="1" extension_auto="1" />
+				<Option type="0" />
+				<Option compiler="arm-elf-gcc" />
+				<ExtraCommands>
+					<Add after="./run_spis" />
+				</ExtraCommands>
+				<MakeCommands>
+					<Build command="make spis" />
+					<CompileFile command="make -f spis.make $file" />
+					<Clean command="make -f spis.make clean" />
+					<DistClean command="$make -f $makefile distclean$target" />
+					<AskRebuildNeeded command="make -q -f spis.make" />
+					<SilentBuild command="make spis &gt; $(CMD_NULL)" />
+				</MakeCommands>
+			</Target>
 			<Environment>
 				<Variable name="TP" value="$(TARGET_COMPILER_DIR)bin/arm-none-eabi-" />
 			</Environment>
@@ -180,6 +196,7 @@
 			<Option target="svr64_ram" />
 			<Option target="svr64_rom" />
 			<Option target="spim" />
+			<Option target="spis" />
 		</Unit>
 		<Unit filename="ld/mg32f02a064_app_ram.ld" />
 		<Unit filename="ld/mg32f02a064_app_rom.ld" />
@@ -206,6 +223,10 @@
 		</Unit>
 		<Unit filename="src/app_slave.c">
 			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/app_spis.c">
+			<Option compilerVar="CC" />
+			<Option target="spis" />
 		</Unit>
 		<Unit filename="src/cmp.c">
 			<Option compilerVar="CC" />
@@ -262,12 +283,14 @@
 			<Option target="app" />
 			<Option target="spim" />
 			<Option target="svr64_rom" />
+			<Option target="spis" />
 		</Unit>
 		<Unit filename="src/svr.h">
 			<Option target="svr64_ram" />
 			<Option target="app" />
 			<Option target="spim" />
 			<Option target="svr64_rom" />
+			<Option target="spis" />
 		</Unit>
 		<Unit filename="src/timer.c">
 			<Option compilerVar="CC" />

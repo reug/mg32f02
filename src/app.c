@@ -91,8 +91,8 @@ void app() {
   //i2c_test_master_w1r();
   //i2c_test_master_wN(4);
   //tm1637_test();
-  spi_test_master();
-
+  //spi_test_master();
+  spi_test_master2();
 
 
 /*

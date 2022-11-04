@@ -12,7 +12,7 @@
 #include "dma.h"
 
 
-/// Локальный MAC адрес
+/// Локальный MAC адрес (сетевой порядок байт)
 const uint8_t addr[6]={0x02,0xEE,0x10,0x00,0x00,0x01};
 
 /// Целевой MAC адрес
@@ -68,7 +68,7 @@ void pin_test(uint8_t p) {
 }
 
 
-/// Обработчик внешнего прерывания INT_SPI0 без DMA.
+/// Обработчик внешнего прерывания без DMA.
 void exint0_hdl_nodma() {
   led1_on();
   enc28j60_bfc(EIE,EIE_INTIE); // сбрасываем INTIE бит согласно даташиту
@@ -85,7 +85,7 @@ void exint0_hdl_nodma() {
 }
 
 
-/// Обработчик внешнего прерывания INT_SPI0.
+/// Обработчик внешнего прерывания с DMA.
 /// Инициализация процедуры считывания принятого пакета.
 void exint0_hdl_dma() {
   uint16_t rxlen, status;
@@ -99,7 +99,7 @@ void exint0_hdl_dma() {
   enc28j60_read_buffer((void*)&rxlen, sizeof(rxlen));
   enc28j60_read_buffer((void*)&status, sizeof(status));
 
-  // Пакет принят успешно?
+  // Кадр принят успешно?
   if (status & 0x0080) { //success
     // Читаем пакет в буфер (если буфера не хватает, пакет обрезается)
     eth_frame_len = (rxlen > ETH_FRAME_MAXSIZE) ? ETH_FRAME_MAXSIZE : rxlen;
@@ -124,11 +124,11 @@ void exint_setup() {
     PX_CR_IOM_din_h0;     // цифровой вход
   //RW(EXIC_PA_TRGS_w) |= (1 << (HW_EXINT0_BIT*2)); // Level
   RW(EXIC_PA_TRGS_w) |= (2 << (HW_EXINT0_BIT*2)); // Edge
-  RW(EXIC_PA_MSK_w) |= (1 << HW_EXINT0_BIT); // OR (AOM
+  RW(EXIC_PA_MSK_w) |= (1 << HW_EXINT0_BIT); // OR (AOM)
   RB(EXIC_INT_b0) |= EXIC_INT_PA_IEA_enable_b0;
   // Установка обработчика прерывания:
-  SVC2(SVC_HANDLER_SET,3,exint0_hdl_nodma);
-  //SVC2(SVC_HANDLER_SET,3,exint0_hdl_dma);
+  //SVC2(SVC_HANDLER_SET,3,exint0_hdl_nodma);
+  SVC2(SVC_HANDLER_SET,3,exint0_hdl_dma);
   RW(CPU_ISER_w) = (1 << 3); // SETENA 3
 }
 
@@ -204,7 +204,8 @@ void spi_dma_setup() {
 
   //RB(SPI0_CR0_b3) |= SPI_CR0_DMA_TXEN_enable_b3 | SPI_CR0_DMA_RXEN_enable_b3; // здесь нельзя это включать, т.к. сразу заблокируются флаги
   // SPI_CR0_DMA_MDS_enable_b3
-  //dma_setup_int(0,DMA_CH0A_CH0_CIE_enable_b2); // включаем прерывание по завершению передачи
+  //dma_setup_int(0,DMA_CH0A_CH0_CIE_enable_b2);
+  // Включаем прерывание по завершению передачи для каналов 0 и 1
   RB(DMA_CH0A_b2) = DMA_CH0A_CH0_CIE_enable_b2;
   RB(DMA_CH1A_b2) = DMA_CH1A_CH1_CIE_enable_b2;
 
@@ -227,7 +228,7 @@ void spi_dma_start_rx(uint32_t n) {
 /// Запуск процедуры отправки данных на канале 1, n - число байт
 void spi_dma_start_tx(uint32_t n) {
   uint8_t cbyte=0; // управляющий байт
-led1_on();
+  led1_on(); // сигнал для цифрового анализатора о начале процедуры отправки кадра
   while(enc28j60_rcr(ECON1) & ECON1_TXRTS) {
     // TXRTS may not clear - ENC28J60 bug. We must reset
     // transmit logic in cause of Tx error
@@ -293,8 +294,8 @@ void spi_test_master() {
 
   eth_init(addr);
   uart_puts(PORT,"EREVID: ",UART_NEWLINE_NONE); strUint16hex(s,enc28j60_rcr(EREVID)); uart_puts(PORT,s,UART_NEWLINE_CRLF);
-  uart_puts(PORT,"PHID1:  ",UART_NEWLINE_NONE); strUint16hex(s,enc28j60_rcr(PHID1)); uart_puts(PORT,s,UART_NEWLINE_CRLF);
-  uart_puts(PORT,"PHID2:  ",UART_NEWLINE_NONE); strUint16hex(s,enc28j60_rcr(PHID2)); uart_puts(PORT,s,UART_NEWLINE_CRLF);
+  //uart_puts(PORT,"PHID1:  ",UART_NEWLINE_NONE); strUint16hex(s,enc28j60_rcr(PHID1)); uart_puts(PORT,s,UART_NEWLINE_CRLF);
+  //uart_puts(PORT,"PHID2:  ",UART_NEWLINE_NONE); strUint16hex(s,enc28j60_rcr(PHID2)); uart_puts(PORT,s,UART_NEWLINE_CRLF);
   uart_puts(PORT,"ERXFCON:",UART_NEWLINE_NONE); strUint16hex(s,enc28j60_rcr(ERXFCON)); uart_puts(PORT,s,UART_NEWLINE_CRLF);
   uart_puts(PORT,"MAC: ",UART_NEWLINE_NONE); eth_get_addr(s); debugbuf(s,6);
 
@@ -303,7 +304,7 @@ void spi_test_master() {
   exint_setup();
   eth_setup_int();
 
-  while (1);
+  //while (1);
 
   // Настройка всех каналов DMA ( 0 - прием, 1 - отправка)
   spi_dma_setup();
@@ -316,18 +317,18 @@ void spi_test_master() {
       //debugbuf(eth_frame,eth_frame_len);
       debugbuf(eth_frame,14);
       //debug32hex('C',*(uint32_t*)(eth_frame+eth_frame_len)); // CRC32 - little endian!
-      debug32hex('S',crc32_block8(eth_frame,eth_frame_len));
+      //debug32hex('S',crc32_block8(eth_frame,eth_frame_len));
 
 
-//      if (a=arp_get_ipaddr(eth_frame)) {
-//        debug32hex('A',a);
-//        if (a==ipaddr) {
-//          uart_puts(PORT,"> ARP_REPLY",UART_NEWLINE_CRLF);
-//          arp_gen_reply(eth_frame);
-//          spi_dma_start_tx(42);
-//
-//        }
-//      }
+      if (a=arp_get_ipaddr(eth_frame)) {
+        debug32hex('A',a);
+        if (a==ipaddr) {
+          uart_puts(PORT,"> ARP_REPLY",UART_NEWLINE_CRLF);
+          arp_gen_reply(eth_frame);
+          spi_dma_start_tx(42);
+
+        }
+      }
       state &= ~ST_PKTRECV;
       __enable_irq();
     }
@@ -346,12 +347,12 @@ void spi_test_master() {
       // после завершения операции DMA (по отправке данных в SPI).
 
 
-      // Буфер в ENC28J60 записан, теперь даем команду на отправку кадра
+      // Буфер в ENC28J60 записан, теперь даем команду на отправку кадра в сеть
       // Устанавливаем границы кадра на отправку в буфере ENC28J60:
       enc28j60_wcr16(ETXST, ENC28J60_TXSTART);
       enc28j60_wcr16(ETXND, ENC28J60_TXSTART + eth_frame_len);
       enc28j60_bfs(ECON1, ECON1_TXRTS); // Даем саму команду
-  led1_off();
+      led1_off();
       state &= ~ST_PKTSENT;
       __enable_irq();
     }
@@ -359,3 +360,30 @@ void spi_test_master() {
   }
 }
 
+
+void spi_test_master2() {
+  uint16_t i;
+  uint16_t n=4; // Число запрашиваемых байт
+  char s[8];    // Буфер для данных
+  s[n]=0; // конец строки
+  // Настройка выводов:
+  HW_SPI0_SETMISO;  HW_SPI0_SETMOSI;  HW_SPI0_SETSCK;  HW_SPI0_SETNSS;
+  // Инициализация, настройка тактирования:
+  spi_init();
+  // Настройка режима работы
+  spi_setup_mode(
+    SPI_NSS_PEN |
+    //SPI_NSSO_INV | SPI_NSS_SWEN | // software NSS control
+    SPI_NSSO_EN | SPI_MASTER | SPI_MSB | SPI_CPHA_LE | SPI_CPOL_LOW
+    | SPI_CR0_DOUT_MDS_enable_w // надо включить, если нет резистора подтяжки
+  );
+  RB(SPI0_CR2_b1) = 1; // SPI0_RX_TH = 1
+  RW(SPI0_CR2_w) |= (8 << SPI_CR2_DSIZE_shift_w); // Размер кадра в битах
+  while (1) {
+    spi_tx(4);
+    delay(20);
+    for (i=0; i<n; i++) s[i]=spi_rx();
+    uart_puts(PORT,s,UART_NEWLINE_CRLF);
+    delay_ms(250);
+  }
+}

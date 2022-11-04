@@ -25,6 +25,12 @@
 #define HW_I2C0_SETSCL    RH(PB_CR10_h0) = (2 << 12) | (1 << 5) | 1
 #define HW_I2C0_SETSDA    RH(PB_CR11_h0) = (2 << 12) | (1 << 5) | 1
 
+// Настройка выводов SPI0 (AFS=2) SLAVE:
+#define HW_SPI0_SETMISO   RH(PB_CR1_h0) = (2 << 12) | 2           // PB1:  MISO push-pull output
+#define HW_SPI0_SETMOSI   RH(PB_CR3_h0) = (2 << 12) | (1<<5) | 3  // PB3: MOSI input + pull-up
+#define HW_SPI0_SETSCK    RH(PB_CR2_h0) = (2 << 12) | (1<<5) | 3  // PB2: SCK input + pull-up
+#define HW_SPI0_SETNSS    RH(PA_CR0_h0) = (2 << 12) | (1<<5) | 3  // PB0: NSS  input + pull-up
+
 #endif // HWCF_A032
 
 //
@@ -55,13 +61,13 @@
 #define HW_I2C0_SETSCL    RH(PC_CR8_h0) = (2 << 12) | (1 << 5) | 1 // PC8: I2C0_SCL, pull-up, open drain
 #define HW_I2C0_SETSDA    RH(PC_CR9_h0) = (2 << 12) | (1 << 5) | 1 // PC9: I2C0_SDA, pull-up, open drain
 
-// Настройка выводов SPI0 (AFS=2):
+// Настройка выводов SPI0 (AFS=2) MASTER:
 //#define HW_SPI0_SETMISO     RH(PB_CR1_h0) = (2 << 12) | (1 << 5) | 3  // PB1: MISO input + pull-up
 //#define HW_SPI0_SETMOSI     RH(PB_CR3_h0) = (2 << 12) | 2             // PB3: MOSI push-pull output
 //#define HW_SPI0_SETSCK      RH(PB_CR2_h0) = (2 << 12) | 2             // PB2: SCK push-pull output
 //#define HW_SPI0_SETNSS      RH(PB_CR0_h0) = (2 << 12) | 2             // PB3: NSS (chip select output) push-pull output
 
-// Настройка выводов SPI0 (AFS=7):
+// Настройка выводов SPI0 (AFS=7) MASTER:
 #define HW_SPI0_SETMISO     RH(PA_CR9_h0) = (7 << 12) | (1 << 5) | 3    // PA9:  MISO input + pull-up
 //#define HW_SPI0_SETMOSI     RH(PA_CR11_h0) = (7 << 12) | 1              // PA11: MOSI open drain
 #define HW_SPI0_SETMOSI     RH(PA_CR11_h0) = (7 << 12) | 2              // PA11: MOSI push-pull output

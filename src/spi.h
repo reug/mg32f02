@@ -64,7 +64,7 @@ void spi_flush_rx() {
 /// TX buffer flush. Сбрасывает TX_LVL.
 inline
 void spi_flush_tx() {
-  RB(SPI0_CR1_b0) = SPI_CR1_TDAT_CLR_enable_b0; // Flush RX buffer
+  RB(SPI0_CR1_b0) = SPI_CR1_TDAT_CLR_enable_b0; // Flush TX buffer
 }
 
 /// Передача одного байта.
@@ -76,6 +76,10 @@ uint8_t spi_tx(uint8_t data);
 /// Размер кадра должен быть настроен на 8 бит.
 inline
 uint8_t spi_rx() {return spi_tx(0xFF);}
+
+void spi_slave_tx(uint8_t data);
+
+uint8_t spi_slave_rx();
 
 ///// Передача (1-4) из data.
 ///// Блокирующая функция с таймаутом: ожидает флаг TXF.

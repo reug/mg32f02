@@ -157,3 +157,16 @@ project "spim"
   linkoptions {"-nostdlib"}
   linkoptions { "-Wl,--gc-sections"}
   linkoptions {"-T mg32f02a064_app_rom.ld"}
+
+-- SPI Slave for MG32F02A032
+project "spis"
+  kind "ConsoleApp"
+  language "C"
+  setup_paths ("MG32F02A032")
+  defines {"HWCF_A032"}
+  defines {"APP_ORIGIN=0x20000000"}
+  defines {"SPI_DEBUG"}
+  files {"src/app_spis.c", "src/utils.c", "src/uart.c", "src/spi.c", "src/init.c", "src/ulib.c", MID_SRC.."MG32x02z_GPL_MID.c", "ic/enc28j60.c", "src/ethernet.c"}
+  linkoptions {"-nostdlib"}
+  linkoptions { "-Wl,--gc-sections"}
+  linkoptions {"-T mg32f02a032_app.ld"}

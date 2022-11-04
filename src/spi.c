@@ -85,6 +85,20 @@ uint8_t spi_rx() {
   return RB(SPI0_RDAT_b0);
 }
 */
+
+
+void spi_slave_tx(uint8_t data) {
+  RB(SPI0_TDAT_b0) = data;
+  while (! (RB(SPI0_STA_b0) & SPI_STA_TXF_happened_b0)) ;
+}
+
+
+uint8_t spi_slave_rx() {
+  while (! (RB(SPI0_STA_b0) & SPI_STA_RXF_happened_b0)) ;
+  //while ( (RB(SPI0_STA_b2) & SPI_STA_RX_LVL_mask_b2) ==0) ;
+  return RB(SPI0_RDAT_b0);
+}
+
 //
 //void spi_send(uint32_t opts, uint8_t len, uint32_t data) {
 //  RW(SPI0_TDAT_w) = data;
