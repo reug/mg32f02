@@ -28,50 +28,32 @@ void mark_on() {RH(PB_SC_h0) = (1 << 8);}
 inline
 void mark_off() {RH(PB_SC_h1) = (1 << 8);}
 
-char s[16]="abcdefghijklmno";    // Буфер для данных
+#define TXBUF_SIZE 16
+char s[TXBUF_SIZE]="ABCDEFGHIJKLMNO";    // Буфер для данных
 
-/// Общие флаги событий:
-volatile uint32_t state;
-
-#define ST_PROC 0x00000001
-
+/// Обработчик прерывания INT_SPI0
 void spi_hdl() {
   uint8_t i;
   uint8_t n; // Число запрашиваемых байт
-  uint8_t f = RB(SPI0_STA_b0);
 
-  if (f & SPI_STA_RXF_mask_b0) {
-    if (state==0) {
-
-    n=RB(SPI0_RDAT_b0);//spi_slave_rx();
-    //spi_flush_tx();
-    for (i=0; i<4; i++) spi_slave_tx(s[i]);
-  //RW(SPI0_TDAT_w) = *(uint32_t*)s;
-  //while (! (RB(SPI0_STA_b0) & SPI_STA_TCF_happened_b0)) ;
-
-  //spi_flush_rx();
-
-  //
-  //uart_puts(PORT,s,UART_NEWLINE_CRLF);
-  //delay_ms(250);
-    state=ST_PROC;
-
-
-    }
-    RB(SPI0_STA_b0) = SPI_STA_RXF_mask_b0; // сбрасываем флаг RXF
+  mark_on();
+  n=RB(SPI0_RDAT_b0);
+  spi_flush_rx();
+  if (n<TXBUF_SIZE) {
+    spi_flush_tx();
+    for (i=0; i<n; i++) spi_slave_tx(s[i]);
   }
-  if (f & SPI_STA_TCF_mask_b0) {
-      mark_on();
-    state=0;
-    spi_flush_rx();
-    RB(SPI0_STA_b0) = SPI_STA_TCF_mask_b0; // сбрасываем флаг RXF
+  mark_off();
+  if (RW(SPI0_STA_b1) & SPI_STA_ROVRF_mask_b1) {
+    mark_on(); mark_off();
+    //spi_flush_rx(); // сбрасываем буфер приема
+    RW(SPI0_STA_w) = SPI_STA_ROVRF_mask_w; // сбрасываем флаг
   }
-mark_off();
+
 }
 
 
 void spi_test_slave() {
-  state=0;
   // Настройка выводов:
   HW_SPI0_SETMISO;  HW_SPI0_SETMOSI;  HW_SPI0_SETSCK;  HW_SPI0_SETNSS;
   // Инициализация, настройка тактирования:
@@ -84,17 +66,15 @@ void spi_test_slave() {
     //| SPI_CR0_DOUT_MDS_enable_w // надо включить, если нет резистора подтяжки
   );
   RW(SPI0_CR2_w) =
-    (8 << SPI_CR2_DSIZE_shift_w)  // размер кадра в битах
-    | SPI_CR2_RX_TH_1_byte_w;     // порог приема
-
-
+    SPI_CR2_TXUPD_EN_enable_w |     // включаем прямое обновление буфера TX, чтобы успевать обновлять данные
+    (8 << SPI_CR2_DSIZE_shift_w) |  // размер кадра в битах
+    SPI_CR2_RX_TH_1_byte_w;         // порог приема
   // Установка обработчика прерывания:
   SVC2(SVC_HANDLER_SET,24,spi_hdl);
   // Разрешение прерывания, в том числе, в NVIC:
-  spi_setup_int(SPI_INT_RX_IE_enable_h0 | SPI_INT_TC_IE_enable_h0);
-
-  while (1) {
-  }
+  spi_setup_int(SPI_INT_RX_IE_enable_h0);
+  //spi_setup_int(SPI_INT_ROVR_IE_enable_h0 | SPI_INT_RX_IE_enable_h0);
+  while (1) ;
 }
 
 
@@ -104,11 +84,10 @@ __attribute__ ((noreturn))
 void app() {
 
   setup_icko();
-  //setup_ihrco();
-  if (setup_xosc()) led1_flash(); else led2_flash();
+  setup_xosc();
 
-  RH(PB_CR8_h0) = 0x0002; // pin -> push-pull output
   mark_off();
+  RH(PB_CR8_h0) = 0x0002; // pin -> push-pull output
 
   gpl_init(); // Включаем модуль GPL для целочисленного аппаратного деления и CRC
 
@@ -134,5 +113,6 @@ void app() {
   spi_test_slave();
 
 
-  while (1) led_blink();
+  //while (1) led_blink();
+  while (1);
 }

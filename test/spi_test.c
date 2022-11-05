@@ -363,6 +363,36 @@ void spi_test_master() {
 
 void spi_test_master2() {
   uint16_t i;
+  uint16_t n=5; // Число запрашиваемых байт
+  char s[8];    // Буфер для данных
+  s[n]=0; // конец строки
+  // Настройка выводов:
+  HW_SPI0_SETMISO;  HW_SPI0_SETMOSI;  HW_SPI0_SETSCK;  HW_SPI0_SETNSS;
+  // Инициализация, настройка тактирования:
+  spi_init();
+  // Настройка режима работы
+  spi_setup_mode(
+    SPI_NSS_PEN |
+    //SPI_NSSO_INV | SPI_NSS_SWEN | // software NSS control
+    SPI_NSSO_EN | SPI_MASTER | SPI_MSB | SPI_CPHA_LE | SPI_CPOL_LOW
+    | SPI_CR0_DOUT_MDS_enable_w // надо включить, если нет резистора подтяжки
+  );
+  RB(SPI0_CR2_b2) = 8; // DSIZE, размер кадра в битах
+  while (1) {
+    //spi_nss(1); // активируем сигнал NSS (-> low)
+    spi_tx(n);
+    delay(20);  // даем время слейву на подготовку данных
+    for (i=0; i<n; i++) s[i]=spi_rx();
+    //spi_nss(0); // деактивируем сигнал NSS (-> high)
+    uart_puts(PORT,s,UART_NEWLINE_CRLF);
+    delay_ms(250);
+  }
+}
+
+
+// Вариант с автоматическим управлением NSS и изменением размера кадра
+void spi_test_master3() {
+  uint16_t i;
   uint16_t n=4; // Число запрашиваемых байт
   char s[8];    // Буфер для данных
   s[n]=0; // конец строки
@@ -377,12 +407,17 @@ void spi_test_master2() {
     SPI_NSSO_EN | SPI_MASTER | SPI_MSB | SPI_CPHA_LE | SPI_CPOL_LOW
     | SPI_CR0_DOUT_MDS_enable_w // надо включить, если нет резистора подтяжки
   );
-  RB(SPI0_CR2_b1) = 1; // SPI0_RX_TH = 1
-  RW(SPI0_CR2_w) |= (8 << SPI_CR2_DSIZE_shift_w); // Размер кадра в битах
+  //RB(SPI0_CR2_b1) = 1; // SPI0_RX_TH = 1
+
   while (1) {
+    RB(SPI0_CR2_b2) = 8; // DSIZE Размер кадра в битах
     spi_tx(4);
     delay(20);
-    for (i=0; i<n; i++) s[i]=spi_rx();
+    RB(SPI0_CR2_b2) = 32; // DSIZE Размер кадра в битах
+    RW(SPI0_TDAT_w) = 0xffffffff;
+    while (! (RB(SPI0_STA_b0) & SPI_STA_RXF_happened_b0)) ;
+    *(uint32_t*)s = RW(SPI0_RDAT_w);
+    //for (i=0; i<n; i++) s[i]=spi_rx();
     uart_puts(PORT,s,UART_NEWLINE_CRLF);
     delay_ms(250);
   }

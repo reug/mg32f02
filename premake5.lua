@@ -76,6 +76,7 @@ project "svr32"
   language "C"
   setup_paths ("MG32F02A032")
   defines {"HWCF_A032"}
+  defines {"APP_ORIGIN=0x20000000"}
   files {"src/init.c", "src/startup.c", "src/main.c", "src/svr.c", "src/ulib.c"}
   linkoptions {"-nostdlib"}
   linkoptions { "-Wl,--gc-sections"}
